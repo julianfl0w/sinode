@@ -67,7 +67,8 @@ class Sinode(Node):
     def __init__(self, parent=None):
         Node.__init__(self)
         self.parent = parent  # enforce single inheritance
-
+        if not hasattr(self, "index"):
+            self.index = 0
         # accumulate path
         if parent is not None:
             self.ancestors = parent.ancestors + [parent]

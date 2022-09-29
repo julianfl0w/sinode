@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="sinode",
-    version="1.0",
+    version="1.1.2",
     description="An inheritable Node class",
     author="Julian Loiacono",
     author_email="jcloiacon@gmail.com",
