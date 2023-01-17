@@ -89,7 +89,7 @@ class Node(Generic):
         # translate box parameters
         self.dotNotationString += self.boxNameWithQuotes + " ["
         for k, v in params.items():
-            self.dotNotationString += k + "=" + str(v) + ",\n "
+            self.dotNotationString += k + "=" + str(v) + ", "
         # remove final comma and space
         self.dotNotationString = self.dotNotationString[:-2]
         self.dotNotationString += "]\n"
