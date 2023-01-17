@@ -2,15 +2,20 @@
 simple importable node class
 
 ## installation  
-
-'''pip install git+https://github.com/julianfl0w/sinode/
+```pip install git+https://github.com/julianfl0w/sinode/```
 
 ## Usage
 
 ## For Graphing
 
-'''python 
+![The_Four_Paragraph_Essay](https://user-images.githubusercontent.com/8158655/213007806-793693df-c4e5-41a9-aa5e-4295db3210ba.png)
+
+The following code exports a hierarchy to Dot notation, and renders it with GraphViz. Result above
+
+```python 
 # make sure to create "graph" directory
+
+import sinode.sinode as sinode
 
 fourParagraph = {
     "The Four Paragraph Essay": {
@@ -50,8 +55,5 @@ fourParagraph = {
 m = sinode.dict2node(fourParagraph)[0]
 print(m.asList())
 m.toGraphViz()
-'''
-
-This code produces:
-![The_Four_Paragraph_Essay](https://user-images.githubusercontent.com/8158655/213007806-793693df-c4e5-41a9-aa5e-4295db3210ba.png)
+```
 
