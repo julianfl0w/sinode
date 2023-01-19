@@ -4,14 +4,29 @@ import os
 class Generic(object):
     def __init__(self, **kwargs):
         self.children = []
+        self.proc_kwargs(**kwargs)
+    def proc_kwargs(self, **kwargs):
         for key, value in kwargs.items():
             exec("self." + key + " = value")
+        self.kwargs = kwargs.copy()
+        for c in self.children:
+            c.proc_kwargs(**self.kwargs)
+
+            
+def copyDictUnique(indict, modifier):
+    outdict = {}
+    if type(indict) == dict:
+        for k, v in indict.items():
+            outdict[k + modifier] = copyDictUnique(v, modifier)
+        return outdict
+    else:
+        return indict + modifier
 
 
-def dict2node(content, parent=None):
+def dict2node(source, parent=None):
     retNodes = []
-    if type(content) == dict:
-        for k, v in content.items():
+    if type(source) == dict:
+        for k, v in source.items():
             print("Processing " + k)
             # dont record meta block
             if k == "meta":
@@ -21,14 +36,13 @@ def dict2node(content, parent=None):
             thisNode.children = dict2node(v, parent=thisNode)
             retNodes += [thisNode]
         return retNodes
-    elif type(content) == list:
-        for i in content:
+    elif type(source) == list:
+        for i in source:
             retNodes += [dict2node(i, parent=parent)]
         return retNodes
 
     else:
-        return Node(name=content)
-
+        return Node(name=source)
 
 class Node(Generic):
     def __str__(self):
@@ -116,28 +130,40 @@ class Node(Generic):
 
     def toMarkdown(self):
         self.markdownString = ""
-        if hasattr(self, "meta"):
-            if self.meta["type"] == "lineage":
-                self.markdownString += self.toGraphViz(params=meta)
-
-            elif self.meta["type"] == "list":
-                self.markdownString += self.asList()
-
-        else:
-            # assume its a list of verses
-            self.markdownString += self.name
-            for c in self.children:
-                self.markdownString += (
-                    "<sup>" + str(self.verse) + "</sup> " + sentence + ". "
-                )
-                self.verse += 1
+        
+        # print verse number and name
+        self.markdownString += (
+            "<sup>" + str(self.getApex().verseNo) + "</sup> " + self.name + ". "
+        )
+        self.getApex().verseNo += 1
 
         return self.markdownString
 
-    def toGraphViz(self):
+    def toGraphViz(self, **kwargs):
+        self.proc_kwargs(**kwargs)
         print("graphing")
         dotString = ""
         dotString += "digraph D {\n"
+        
+        # apply default params if none exist
+        self.meta = {
+            "type": "lineage",
+            "graphParams": {
+                "rankdir": "LR",
+                "style": "filled",
+                "color": "lightgrey",
+                "fillcolor": "\"darkgray:gold\"",
+                "gradientangle": 0,
+            },
+            "boxParams": {
+                "shape": "box",
+                "color": "blue",
+                "fillcolor": "\"yellow:green\"",
+                "style": "filled",
+                "gradientangle": 270,
+            },
+        }
+        
         # translate graph parameters
         for k, v in self.meta["graphParams"].items():
             dotString += k + " = " + str(v) + "\n"
@@ -208,7 +234,14 @@ class Node(Generic):
         # os.system("mdpdf -o README.pdf README_formatted.md")
         os.system("pandoc --pdf-engine=xelatex README_formatted.md -s -o README.pdf")
 
-
+    def computeHeight(self):
+        if not len(self.children):
+            self._height = 0
+        else:
+            self._height = min([c.computeHeight() for c in self.children])
+            
+        return self._height
+        
 def NodeFromFile(filename):
     # open a file, where you ant to store the data
     with open(filename, "rb") as f:
@@ -246,84 +279,113 @@ class Minode(Node):
             return self
         return self.parent.getAncestor(ancestorType)
 
-    
-# a file is equivalent to a chapter
-class Chapter(Node):
-    def __init__(self, file, depth):
-        Node.__init__(self)
-        print("Adding chapter " + file)
-        self.depth = depth
-        self.verse = 0
-        self.paragraphs = []
-        self.name = file.split(os.sep)[-1].replace(".py", "")
-        with open(file, "r") as f:
-            print(file)
-            chapter = eval(f.read())
-            for i, paragraph in enumerate(chapter):
-                self.paragraphs += [Paragraph(verse = self.verse, paragraph=paragraph)]
-                self.verse += self.paragraphs[-1].verse
-        self.children = self.paragraphs
 
-    def toMarkdown(self):
-
-        # add its title
-        self.outstring = "#" * (self.depth) + " " + self.name + "\n"
-
-        for child in self.children:
-            self.outstring += child.toMarkdown()
-            # add a new line between paragraphs
-            self.outstring += "\n\n"
-        return self.outstring
-
-class Paragraph(Node):
-    pass
-
-class Category(Node):
-    def __init__(self, directory, depth=0):
-        Node.__init__(self)
-        self.depth = depth
-        self.chapters = []
-        self.categories = []
-        self.outstring = ""
-        self.name = directory.split(os.sep)[-1]
-
-        # read in ignore file
-        if os.path.exists(os.path.join(directory, "ignore.py")):
-            with open(os.path.join(directory, "ignore.py"), "r") as f:
-                ignore = eval(f.read())
-        else:
-            ignore = []
+class FractalBook(Node):
+    def __init__(self, **kwargs):
+        # defaults
+        self.name = ""
+        self.priority = 1000
+        Node.__init__(self, **kwargs)
+        
+        if not os.path.exists("graphs"):
+            os.mkdir("graphs")
+        
         # print("Ignore " + str(ignore))
-
-        # iterate over files
-        for file in os.listdir(directory):
-            if file in ignore or file == "ignore.py":
-                continue
-            resolved = os.path.join(directory, file)
-
-            # if its a dir, its a subcategory
-            if os.path.isdir(resolved):
-                self.categories += [Category(resolved, depth + 1)]
-
-            # otherwise, if it's a python file, execute it
-            # each python file is a chapter, containing a list of paragraphs
+        if self.origin == "directory":
+            
+            self.name = self.source.split(os.sep)[-1]
+        
+            # read in ignore file
+            if os.path.exists(os.path.join(self.source, "ignore.py")):
+                with open(os.path.join(self.source, "ignore.py"), "r") as f:
+                    ignore = eval(f.read())
             else:
-                if file.endswith(".py"):
-                    print("processing file " + file)
-                    self.chapters += [Chapter(resolved, depth=depth + 1)]
+                ignore = []
 
+            # iterate over files
+            for file in os.listdir(self.source):
+                resolved = os.path.join(self.source, file)
+                
+                if file in ignore or file == "ignore.py":
+                    continue
+                elif file == "meta.py":
+                    with open(resolved, 'r') as f:
+                        self.meta = eval(f.read())
+                    continue
+
+                # if its a dir, its a subcategory
+                if os.path.isdir(resolved):
+                    self.children += [FractalBook(parent = self, origin = "directory", source = resolved, depth=self.depth + 1)]
+
+                # otherwise, if it's a python file, execute it
+                # each python file is a chapter, containing a list of paragraphs
+                else:
+                    if file.endswith(".py"):
+                        print("processing file " + file)
+                        self.children += [FractalBook(parent = self, origin = "file", source = resolved, depth=self.depth + 1)]
+                        
+        elif self.origin == "file":
+            print("Adding chapter " + self.source)
+            self.name = self.source.split(os.sep)[-1].replace(".py", "")
+            with open(self.source, "r") as f:
+                print(self.source)
+                self.source = eval(f.read())
+                
+            self.processText()
+            
+        
+        elif self.origin == "text":
+            self.processText()
+            
+        # if it has no children, assume its a sentence
+        if not len(self.children):
+            self.origin = "sentence"
+        
+        self.computeHeight()
+            
+    def processText(self):
+        if type(self.source) == list:
+            raise Exception("Lists not allowed!")
+            #for i, paragraph in enumerate(chapter):
+            #    self.children += [FractalBook(parent = self, origin="text", source=paragraph)]
+        if type(self.source) == dict:
+            for k, v in self.source.items():
+                if k == "meta":
+                    self.meta = v
+                    continue
+                self.children += [FractalBook(parent = self, name = k, origin="text", source=v)]
+                    
     def toMarkdown(self):
+        self.verseNo = 0
+        self.markdownString = ""
+        
+        if hasattr(self, "meta"):
+            if self.meta["type"] == "lineage":
+                self.markdownString += self.toGraphViz(params=meta)
+            elif self.meta["type"] == "list":
+                for child in self.children:
+                    self.markdownString += child.asList(depth = 1)
+
         # add its title
-        self.outstring += "#" * (self.depth) + " " + self.name + "\n"
-        for chapter in self.chapters:
-            self.outstring += chapter.toMarkdown()
-        for category in self.categories:
-            self.outstring += category.toMarkdown()
-        return self.outstring
+        elif self._height > 0:
+            self.markdownString += "#" * (self.depth) + " " + self.name + "\n"
+            self.getApex().verseNo = 0
+            
+        else:
+            self.markdownString += self.name + ". "
+            
+        for child in self.children:
+            self.markdownString += child.toMarkdown()
+        
+        if self._height == 1:
+            # add a new line between paragraphs
+            self.markdownString += "\n\n"
+            
+        return self.markdownString
 
 
 if __name__ == "__main__":
-    m = Category(os.path.join(here, "Book Of Julian"), depth=1)
+    m = FractalBook(os.path.join(here, "Book Of Julian"), depth=1)
 
     preformat = m.toMarkdown()
     with open("README.md", "w+") as f:
