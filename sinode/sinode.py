@@ -238,7 +238,7 @@ class Node(Generic):
         if not len(self.children):
             self._height = 0
         else:
-            self._height = min([c.computeHeight() for c in self.children])
+            self._height = 1 + max([c.computeHeight() for c in self.children])
             
         return self._height
         
@@ -302,10 +302,14 @@ class FractalBook(Node):
             else:
                 ignore = []
 
+            # list files by priority
+            
+                
             # iterate over files
             for file in os.listdir(self.source):
                 resolved = os.path.join(self.source, file)
                 
+                # check for special files
                 if file in ignore or file == "ignore.py":
                     continue
                 elif file == "meta.py":
@@ -353,33 +357,36 @@ class FractalBook(Node):
                 if k == "meta":
                     self.meta = v
                     continue
-                self.children += [FractalBook(parent = self, name = k, origin="text", source=v)]
+                self.children += [FractalBook(parent = self, depth = self.depth+1, name = k, origin="text", source=v)]
                     
     def toMarkdown(self):
         self.verseNo = 0
         self.markdownString = ""
         
-        if hasattr(self, "meta"):
+        if hasattr(self, "meta") and "type" in self.meta.keys():
+            print(self.meta["type"])
+            self.markdownString += self.name + "\n"
             if self.meta["type"] == "lineage":
-                self.markdownString += self.toGraphViz(params=meta)
+                self.markdownString += self.toGraphViz(params=self.meta)
             elif self.meta["type"] == "list":
                 for child in self.children:
-                    self.markdownString += child.asList(depth = 1)
+                    self.markdownString += child.asList(depth = 0   )
 
-        # add its title
-        elif self._height > 0:
-            self.markdownString += "#" * (self.depth) + " " + self.name + "\n"
-            self.getApex().verseNo = 0
-            
         else:
-            self.markdownString += self.name + ". "
-            
-        for child in self.children:
-            self.markdownString += child.toMarkdown()
-        
-        if self._height == 1:
-            # add a new line between paragraphs
-            self.markdownString += "\n\n"
+            # add its title
+            if self._height > 0:
+                self.markdownString += "#" * (self.depth) + " " + self.name + "\n"
+                self.getApex().verseNo = 0
+
+            else:
+                self.markdownString += self.name + ". "
+
+            for child in self.children:
+                self.markdownString += child.toMarkdown()
+
+            if self._height >= 1:
+                # add a new line between paragraphs
+                self.markdownString += "\n\n"
             
         return self.markdownString
 
