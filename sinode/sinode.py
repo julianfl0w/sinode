@@ -94,27 +94,39 @@ class Node(Generic):
             # dump information to that file
             pickle.dump(self, f)
 
-    def asDotNotation(self, params):
+    def asDotNotation(self, depth = 0, **kwargs):
         self.dotNotationString = ""
+        
+        for key, value in kwargs.items():
+            print(key + " = value")
+            exec(key + " = value")
+            
         # create this key
         self.boxNameWithQuotes = '"' + self.name + '"'
         print(self.boxNameWithQuotes)
 
+        print(kwargs)
         # translate box parameters
         self.dotNotationString += self.boxNameWithQuotes + " ["
-        for k, v in params.items():
+        for k, v in kwargs["boxParams"].items():
             self.dotNotationString += k + "=" + str(v) + ", "
         # remove final comma and space
         self.dotNotationString = self.dotNotationString[:-2]
         self.dotNotationString += "]\n"
         
+        # provided we havent reached max depth
+        if "maxDepth" in kwargs.keys() and depth >= kwargs["maxDepth"] :
+            return self.dotNotationString
+            
+        kwargs["depth"] = depth+1
         # insert the child nodes
         for c in self.children:
-            self.dotNotationString += c.asDotNotation(params)
+            self.dotNotationString += c.asDotNotation(**kwargs)
 
         # relationships
         for c in self.children:
             self.dotNotationString += self.boxNameWithQuotes + " -> " + c.boxNameWithQuotes + " [penwidth=1]\n"
+                
         return self.dotNotationString
 
     def asList(self, depth=0):
@@ -168,7 +180,8 @@ class Node(Generic):
         for k, v in self.meta["graphParams"].items():
             dotString += k + " = " + str(v) + "\n"
         # insert our own node
-        dotString += self.asDotNotation(self.meta["boxParams"])
+        #kwargs["boxParams"] = self.meta["boxParams"]
+        dotString += self.asDotNotation(boxParams = self.meta["boxParams"],**kwargs)
         dotString += "}"
 
         # write out the dot notation file
@@ -182,7 +195,7 @@ class Node(Generic):
         print(runstring)
         os.system(runstring)
 
-        #
+        # reference it in the markdown
         self.markdownString = (
             "\n![" + self.name + "](/" + imagename + '?raw=true "' + self.name + '")\n\n'
         )
@@ -371,6 +384,8 @@ class FractalBook(Node):
             elif self.meta["type"] == "list":
                 for child in self.children:
                     self.markdownString += child.asList(depth = 0   )
+                self.markdownString += "\n\n"
+                
 
         else:
             # add its title
