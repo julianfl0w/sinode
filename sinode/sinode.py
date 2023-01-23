@@ -4,6 +4,9 @@ import os
 class Generic(object):
     def __init__(self, **kwargs):
         self.children = []
+        self.priority = 999
+        self.ignore = False
+        self.type = "normal"
         self.proc_kwargs(**kwargs)
     def proc_kwargs(self, **kwargs):
         for key, value in kwargs.items():
@@ -45,6 +48,13 @@ def dict2node(source, parent=None):
         return Node(name=source)
 
 class Node(Generic):
+    
+    def sortChildrenByPriority(self):
+        for c in self.children:
+            c.sortChildrenByPriority()
+        
+        self.children.sort(key=lambda x: x.priority, reverse=False)
+    
     def __str__(self):
         retstr = str(type(self)) + "\n"
         for child in self.children:
@@ -97,13 +107,16 @@ class Node(Generic):
     def asDotNotation(self, depth = 0, **kwargs):
         self.dotNotationString = ""
         
-        for key, value in kwargs.items():
-            print(key + " = value")
-            exec(key + " = value")
-            
         # create this key
         self.boxNameWithQuotes = '"' + self.name + '"'
         print(self.boxNameWithQuotes)
+        
+        if self.ignore:
+            return self.dotNotationString
+        
+        for key, value in kwargs.items():
+            exec(key + " = value")
+            
 
         print(kwargs)
         # translate box parameters
@@ -114,6 +127,15 @@ class Node(Generic):
         self.dotNotationString = self.dotNotationString[:-2]
         self.dotNotationString += "]\n"
         
+        # relationships
+        if self.parent is not None and hasattr(self.parent, "boxNameWithQuotes"):
+            self.dotNotationString += self.parent.boxNameWithQuotes + " -> " + self.boxNameWithQuotes + " ["
+            for k, v in kwargs["arrowParams"].items():
+                self.dotNotationString += k + "=" + str(v) + ", "
+            # remove final comma and space
+            self.dotNotationString = self.dotNotationString[:-2]
+            self.dotNotationString += "]\n"
+                
         # provided we havent reached max depth
         if "maxDepth" in kwargs.keys() and depth >= kwargs["maxDepth"] :
             return self.dotNotationString
@@ -123,10 +145,6 @@ class Node(Generic):
         for c in self.children:
             self.dotNotationString += c.asDotNotation(**kwargs)
 
-        # relationships
-        for c in self.children:
-            self.dotNotationString += self.boxNameWithQuotes + " -> " + c.boxNameWithQuotes + " [penwidth=1]\n"
-                
         return self.dotNotationString
 
     def asList(self, depth=0):
@@ -164,16 +182,24 @@ class Node(Generic):
                 "rankdir": "LR",
                 "style": "filled",
                 "color": "lightgrey",
+                "bgcolor": "\"#262626\"",
                 "fillcolor": "\"darkgray:gold\"",
                 "gradientangle": 0,
             },
             "boxParams": {
                 "shape": "box",
-                "color": "blue",
-                "fillcolor": "\"yellow:green\"",
+                #"color": "black",
+                "color": "\"#262626\"",
+                "fontcolor": "white",
+                #"fillcolor": "\"darkorchid4:grey10\"",
+                "fillcolor": "\"#6C2944:#29001C\"",
                 "style": "filled",
-                "gradientangle": 270,
+                "gradientangle": 270.05,
             },
+            "arrowParams":{
+                "color": "white",
+                "penwidth": 1,
+            }
         }
         
         # translate graph parameters
@@ -181,7 +207,8 @@ class Node(Generic):
             dotString += k + " = " + str(v) + "\n"
         # insert our own node
         #kwargs["boxParams"] = self.meta["boxParams"]
-        dotString += self.asDotNotation(boxParams = self.meta["boxParams"],**kwargs)
+        dotString += self.asDotNotation(arrowParams = self.meta["arrowParams"], 
+                                        boxParams = self.meta["boxParams"],**kwargs)
         dotString += "}"
 
         # write out the dot notation file
@@ -328,6 +355,8 @@ class FractalBook(Node):
                 elif file == "meta.py":
                     with open(resolved, 'r') as f:
                         self.meta = eval(f.read())
+                        for k, v in self.meta.items():
+                            exec("self." + k + " = v")
                     continue
 
                 # if its a dir, its a subcategory
@@ -359,6 +388,7 @@ class FractalBook(Node):
             self.origin = "sentence"
         
         self.computeHeight()
+        self.sortChildrenByPriority()
             
     def processText(self):
         if type(self.source) == list:
@@ -369,6 +399,8 @@ class FractalBook(Node):
             for k, v in self.source.items():
                 if k == "meta":
                     self.meta = v
+                    for k, v in self.meta.items():
+                        exec("self." + k + " = v")
                     continue
                 self.children += [FractalBook(parent = self, depth = self.depth+1, name = k, origin="text", source=v)]
                     
@@ -376,16 +408,17 @@ class FractalBook(Node):
         self.verseNo = 0
         self.markdownString = ""
         
-        if hasattr(self, "meta") and "type" in self.meta.keys():
-            print(self.meta["type"])
-            self.markdownString += self.name + "\n"
-            if self.meta["type"] == "lineage":
-                self.markdownString += self.toGraphViz(params=self.meta)
-            elif self.meta["type"] == "list":
-                for child in self.children:
-                    self.markdownString += child.asList(depth = 0   )
-                self.markdownString += "\n\n"
-                
+        if self.ignore:
+            return self.markdownString
+
+        self.markdownString += self.name + "\n"
+        if self.type == "lineage":
+            self.markdownString += self.toGraphViz(params=self.meta)
+        elif self.type == "list":
+            for child in self.children:
+                self.markdownString += child.asList(depth = 0   )
+            self.markdownString += "\n\n"
+
 
         else:
             # add its title
