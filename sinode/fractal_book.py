@@ -1,6 +1,7 @@
 import pickle
 import os
 from . import sinode
+import json
 here = os.path.dirname(os.path.abspath(__file__))
 
 def toPDF(intext, basedir = here, ext="html"):
@@ -17,12 +18,56 @@ def toPDF(intext, basedir = here, ext="html"):
     # os.system("mdpdf -o README.pdf README_formatted.md")
     os.system("pandoc --pdf-engine=xelatex " + formattedFilename + " -s -o README.pdf")
 
+def depthFirstDictMerge(priority, additions):
+    if type(priority) is dict:  
+        retdict = priority.copy()
+        for k,v in additions.items():
+            if k in retdict.keys():
+                retdict[k] = depthFirstDictMerge(retdict[k], v)
+            else:
+                retdict[k] = v
+        return retdict
+                
+    elif type(priority) is list:
+        return priority + additions
+    
+    else:
+        return priority
+    
+    
+    
 class FractalBook(sinode.Node):
     def __init__(self, **kwargs):
         # defaults
         self.name = ""
-        self.priority = 1000
-        self.meta = sinode.Generic()
+        # the default meta
+        self.meta = {
+            "priority": 1000,
+            "type": "default",
+            "graphParams": {
+                "rankdir": "LR",
+                "style": "filled",
+                "color": "lightgrey",
+                "bgcolor": "\"#262626\"",
+                "fillcolor": "\"darkgray:gold\"",
+                "gradientangle": 0,
+                "dpi": 300,
+            },
+            "boxParams": {
+                "shape": "box",
+                #"color": "black",
+                "color": "\"#262626\"",
+                "fontcolor": "white",
+                #"fillcolor": "\"darkorchid4:grey10\"",
+                "fillcolor": "\"#6C2944:#29001C\"",
+                "style": "filled",
+                "gradientangle": 270.05,
+            },
+            "arrowParams":{
+                "color": "white",
+                "penwidth": 1,
+            }
+        }
         sinode.Node.__init__(self, **kwargs)
         
         if not os.path.exists("graphs"):
@@ -49,9 +94,9 @@ class FractalBook(sinode.Node):
                     continue
                 elif file == "meta.py":
                     with open(resolved, 'r') as f:
-                        self.meta = eval(f.read())
-                        for k, v in self.meta.items():
-                            exec("self." + k + " = v")
+                        self.meta = depthFirstDictMerge(eval(f.read()), self.meta)
+                        #for k, v in self.meta.items():
+                        #    exec("self." + k + " = v")
                     continue
 
                 # if its a dir, its a subcategory
@@ -90,17 +135,20 @@ class FractalBook(sinode.Node):
         if type(self.source) == list:
             for element in self.source:
                 self.children += [FractalBook(parent = self, depth = self.depth+1, name = "", origin="text", source=element)]
-                if not hasattr(self.meta, "type"):
-                    self.meta.type == "list"
+                self.meta = depthFirstDictMerge({"type": "list"}, self.meta)
         
         # similar with dictionary, except the elements are named
         if type(self.source) == dict:
             for k, v in self.source.items():
                 # read meta, dont add as child
                 if k == "meta":
-                    self.meta = v
-                    for k, v in self.meta.items():
-                        exec("self." + k + " = v")
+                    #print(json.dumps(self.meta, indent=2))
+                    self.meta = depthFirstDictMerge(v, self.meta)
+                    if "font" in v.keys():
+                        print(json.dumps(self.meta, indent=2))
+                        die
+                    #for k, v in self.meta.items():
+                    #    exec("self." + k + " = v")
                     continue
                 self.children += [FractalBook(parent = self, depth = self.depth+1, name = k, origin="text", source=v)]
                     
@@ -121,19 +169,28 @@ class FractalBook(sinode.Node):
             htmlString += "<html>\n"
             htmlString += "<body style=\"color:white;align:justify\">\n"
             
-        
-        if self.type == "lineage":
+        if "font" in self.meta.keys():
+            htmlString += "<p "
+            for k, v in self.meta["font"].items():
+                htmlString += k + " : " + str(v) + ";\n" 
+                
+            
+        if self.meta["type"] == "lineage":
             # put the graph title
             markdownString += self.name + "\n"
             htmlString += self.name + "\n"
             # and include the graph!
             self.toGraphViz(params=self.meta)
             
-        elif self.type == "list":
+        elif self.meta["type"] == "list":
             # put the list title
-            markdownString += self.name + "\n"
-            htmlString += self.name + "\n"
-            htmlString += "<ul>"
+            if self.name != "Prompt":
+                markdownString += self.name + "\n"
+                htmlString += self.name + "\n"
+                htmlString += "<ul>"
+            else:
+                htmlString     += "<i>"
+                htmlString += "<ul style=\"list-style: none;padding-left: 0;\">"
             
             # start listing
             for child in self.children:
@@ -141,15 +198,20 @@ class FractalBook(sinode.Node):
                 htmlString     += child.toList(depth = 0)["html"]
                 
             htmlString += "</ul>"
+            
+            if self.name == "Prompt":
+                htmlString     += "</i>"
+               
+            
             # double newline after
             markdownString += "\n\n"
             htmlString     += "\n\n"
 
-        elif self.type == "eval":
+        elif self.meta["type"] == "eval":
             #print(self.children[0].name)
             htmlString += eval(self.children[0].children[0].name) + "\n"
             
-        elif self.type == "default":
+        elif self.meta["type"] == "default":
             
             
             # if its height is 0, this is normal text
@@ -166,6 +228,7 @@ class FractalBook(sinode.Node):
                     self.getApex().verseNo += 1
                     
                 markdownString += self.name + ". "
+                    
                 htmlString += self.name + ". "
                 
             # otherwise its a title / heading
@@ -180,12 +243,13 @@ class FractalBook(sinode.Node):
                                     "</h" + str(self.depth+1) + ">\n")
                 self.getApex().verseNo = 0
                 #htmlString     += "\n<hr>"
-
+                
             # if its height is 1, add paragraph tag
             if self._height == 1:
                 htmlString += (
                     "<p align=\"justify\">"
                 )    
+                
                 
             # dont forget the children
             for child in self.children:
@@ -205,9 +269,12 @@ class FractalBook(sinode.Node):
                 )    
         
         else:
-            print(self.type)
+            print(self.meta["type"])
             die
-            
+
+        if "font" in self.meta.keys():
+            htmlString += "</p>"
+
         if self.depth == 0:
             htmlString += "</body>\n"
             htmlString += "</html>\n"
@@ -267,35 +334,7 @@ class FractalBook(sinode.Node):
         print("graphing")
         dotString = ""
         dotString += "digraph D {\n"
-        
-        # apply default params if none exist
-        self.meta = {
-            "type": "lineage",
-            "graphParams": {
-                "rankdir": "LR",
-                "style": "filled",
-                "color": "lightgrey",
-                "bgcolor": "\"#262626\"",
-                "fillcolor": "\"darkgray:gold\"",
-                "gradientangle": 0,
-                "dpi": 300,
-            },
-            "boxParams": {
-                "shape": "box",
-                #"color": "black",
-                "color": "\"#262626\"",
-                "fontcolor": "white",
-                #"fillcolor": "\"darkorchid4:grey10\"",
-                "fillcolor": "\"#6C2944:#29001C\"",
-                "style": "filled",
-                "gradientangle": 270.05,
-            },
-            "arrowParams":{
-                "color": "white",
-                "penwidth": 1,
-            }
-        }
-        
+                
         # translate graph parameters
         for k, v in self.meta["graphParams"].items():
             dotString += k + " = " + str(v) + "\n"

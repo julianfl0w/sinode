@@ -35,7 +35,9 @@ def dict2node(source, parent=None):
             print("Processing " + k)
             # dont record meta block
             if k == "meta":
-                parent.meta = v
+                for k0, v0 in v:
+                    exec("self.parent." + k0 + " = v0")
+                    #parent.meta = v
                 continue
             thisNode = Node(name=k, parent=parent)
             thisNode.children = dict2node(v, parent=thisNode)
@@ -55,7 +57,7 @@ class Node(Generic):
         for c in self.children:
             c.sortChildrenByPriority()
         
-        self.children.sort(key=lambda x: x.priority, reverse=False)
+        self.children.sort(key=lambda x: x.meta["priority"], reverse=False)
     
     def __str__(self):
         retstr = str(type(self)) + "\n"
