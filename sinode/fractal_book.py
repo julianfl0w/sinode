@@ -40,8 +40,16 @@ class FractalBook(sinode.Node, exportable.Exportable):
     def __init__(self, **kwargs):
         # defaults
         self.name = ""
+        self.nodeNumber = 0
+        self.verseNo = 0
+        self.referenceNo = 0
+        
         # the default meta
         sinode.Node.__init__(self, **kwargs)
+        
+        # create this key. its just a number. the label will be set later
+        self.clusterName = '"cluster_' + str(self.getApex().nodeNumber) + '"'
+        self.getApex().nodeNumber += 1
         
         if self.parent is not None:
             self.meta = self.parent.meta.copy()
