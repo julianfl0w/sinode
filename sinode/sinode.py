@@ -6,9 +6,6 @@ here = os.path.dirname(os.path.abspath(__file__))
 class Generic(object):
     def __init__(self, **kwargs):
         self.children = []
-        self.priority = 999
-        self.ignore = False
-        self.type = "default"
         self.proc_kwargs(**kwargs)
     def proc_kwargs(self, **kwargs):
         for key, value in kwargs.items():
@@ -28,28 +25,28 @@ def copyDictUnique(indict, modifier):
         return indict + modifier
 
 
-def dict2node(source, parent=None):
-    retNodes = []
-    if type(source) == dict:
-        for k, v in source.items():
-            print("Processing " + k)
-            # dont record meta block
-            if k == "meta":
-                for k0, v0 in v:
-                    exec("self.parent." + k0 + " = v0")
-                    #parent.meta = v
-                continue
-            thisNode = Node(name=k, parent=parent)
-            thisNode.children = dict2node(v, parent=thisNode)
-            retNodes += [thisNode]
-        return retNodes
-    elif type(source) == list:
-        for i in source:
-            retNodes += [dict2node(i, parent=parent)]
-        return retNodes
-
-    else:
-        return Node(name=source)
+#def dict2node(source, parent=None):
+#    retNodes = []
+#    if type(source) == dict:
+#        for k, v in source.items():
+#            print("Processing " + k)
+#            # dont record meta block
+#            if k == "meta":
+#                for k0, v0 in v:
+#                    exec("self.parent." + k0 + " = v0")
+#                    #parent.meta = v
+#                continue
+#            thisNode = Node(name=k, parent=parent)
+#            thisNode.children = dict2node(v, parent=thisNode)
+#            retNodes += [thisNode]
+#        return retNodes
+#    elif type(source) == list:
+#        for i in source:
+#            retNodes += [dict2node(i, parent=parent)]
+#        return retNodes
+#
+#    else:
+#        return Node(name=source)
 
 class Node(Generic):
     
@@ -78,6 +75,18 @@ class Node(Generic):
         retDict[str(type(self))] = retList
         return retDict
 
+    def asNamedDict(self):
+        retList = []
+        for child in self.children:
+            try:
+                retList += [child.asNamedDict()]
+            except:
+                retList += [str(child.name)]  # + " " + hex(id(child))]
+
+        retDict = {}
+        retDict[self.name] = retList
+        return retDict
+    
     def getSiblings(self):
         return self.parent.children
 
@@ -109,13 +118,19 @@ class Node(Generic):
             pickle.dump(self, f)
 
     def getDecendentGenerationCount(self):
+        return self.getHeight()
+        
+    def getHeight(self):
         if self.children == []:
             return 0
         else:
             return max([c.getHeight() for c in children])
 
-    def getHeight(self):
-        return getDecendentGenerationCount(self)
+    def getHeightNoLists(self):
+        if self.children == [] or self.meta["type"] != "default":
+            return 0
+        else:
+            return max([c.getHeightNoLists() for c in children])
 
     def getAncestors(self):
         if self.parent is None:
@@ -145,6 +160,14 @@ class Node(Generic):
             self._height = 0
         else:
             self._height = 1 + max([c.computeHeight() for c in self.children])
+            
+        return self._height
+    
+    def computeHeightNoLists(self):
+        if self.children == [] or self.meta["type"] != "default":
+            self._height = 0
+        else:
+            self._height = 1 + max([c.computeHeightNoLists() for c in self.children])
             
         return self._height
     
