@@ -106,8 +106,9 @@ class Exportable:
                 htmlString     += verseSuperscript["html"]     + self.name + referenceSuperscript["html"]    
                 markdownString += verseSuperscript["markdown"] + self.name + referenceSuperscript["markdown"]
                 
-                htmlString     += ". "
-                markdownString += ". "
+                if markdownString[-1] not in [".", "!", ":", ",", ">", "?", "\n"]:
+                    htmlString     += ". "
+                    markdownString += ". "
                 
             # otherwise its a title / heading
             else:
