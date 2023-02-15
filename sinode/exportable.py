@@ -95,7 +95,8 @@ class Exportable:
 
         elif self.meta["type"] == "eval":
             #print(self.children[0].name)
-            htmlString += eval(self.children[0].children[0].name) + "\n"
+            htmlString += eval(self.children[0].children[0].name)["html"] + "\n"
+            markdownString += eval(self.children[0].children[0].name)["markdown"] + "\n"
             
         elif self.meta["type"] == "default":
             # if its height is 0, this is normal text
