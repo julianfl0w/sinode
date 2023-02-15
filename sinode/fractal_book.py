@@ -19,22 +19,6 @@ def toPDF(intext, basedir = here, ext="html"):
     # os.system("mdpdf -o README.pdf README_formatted.md")
     os.system("pandoc --pdf-engine=xelatex " + formattedFilename + " -s -o README.pdf")
 
-def depthFirstDictMerge(priority, additions):
-    if type(priority) is dict:  
-        retval = priority.copy()
-        for k,v in additions.items():
-            if k in retval.keys():
-                retval[k] = depthFirstDictMerge(retval[k], v)
-            else:
-                retval[k] = v
-        return retval
-                
-    elif type(priority) is list:
-        return priority + additions
-        die
-    
-    else:
-        return priority
     
 class FractalBook(sinode.Node, exportable.Exportable):
     def __init__(self, **kwargs):
@@ -52,7 +36,10 @@ class FractalBook(sinode.Node, exportable.Exportable):
         self.getApex().nodeNumber += 1
         
         if self.parent is not None:
-            self.meta = self.parent.meta.copy()
+            self.meta = {}
+            for k, v in self.parent.meta.items():
+                if k not in self.parent.meta["noPropagate"]:
+                    self.meta[k] = v
             
         if not os.path.exists("graphs"):
             os.mkdir("graphs")
@@ -68,7 +55,7 @@ class FractalBook(sinode.Node, exportable.Exportable):
                 # check for meta files
                 if file == "meta.py":
                     with open(resolved, 'r') as f:
-                        self.meta = depthFirstDictMerge(eval(f.read()), self.meta)
+                        self.meta = sinode.depthFirstDictMerge(eval(f.read()), self.meta)
                         #for k, v in self.meta.items():
                         #    exec("self." + k + " = v")
                     continue
@@ -105,25 +92,26 @@ class FractalBook(sinode.Node, exportable.Exportable):
             
     def processText(self):
         # if its a list, add all elements as children
-        if type(self.source) == list:
-            die
+        if type(self.source) is list:
             for element in self.source:
                 self.children += [FractalBook(parent = self, depth = self.depth+1, name = "", origin="text", source=element)]
-                self.meta = depthFirstDictMerge({"type": "list"}, self.meta)
+                self.meta = sinode.depthFirstDictMerge({"type": "list"}, self.meta)
         
         # similar with dictionary, except the elements are named
-        if type(self.source) == dict:
+        if type(self.source) is dict:
             for k, v in self.source.items():
                 # read meta, dont add as child
                 if k == "meta":
                     #print(json.dumps(self.meta, indent=2))
                     #print(self.name)
-                    self.meta = depthFirstDictMerge(v, self.meta)
+                    self.meta = sinode.depthFirstDictMerge(v, self.meta)
                     #for k, v in self.meta.items():
                     #    exec("self." + k + " = v")
                     continue
                 self.children += [FractalBook(parent = self, depth = self.depth+1, name = k, origin="text", source=v)]
-                    
+        
+        else:
+            self.name = self.source
 
 if __name__ == "__main__":
     m = FractalBook(os.path.join(here, "Book Of Julian"), depth=1)

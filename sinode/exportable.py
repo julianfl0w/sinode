@@ -71,6 +71,7 @@ class Exportable:
             # put the list title
             if self.name != "Prompt":
                 verseSuperscript = self.addVerseNo()
+                print(self.name)
                 htmlString += verseSuperscript["html"] + self.name + "\n"
                 markdownString += verseSuperscript["markdown"] + self.name + "\n"
                 htmlString += "<ul>"
@@ -89,13 +90,18 @@ class Exportable:
                 htmlString     += "</i>"
                
             
+            referenceSuperscript = self.getReferenceSuperscript()
+            htmlString     += referenceSuperscript["html"]    
+            markdownString += referenceSuperscript["markdown"]
+
             # double newline after
             markdownString += "\n\n"
             htmlString     += "\n\n"
 
         elif self.meta["type"] == "eval":
-            #print(self.children[0].name)
-            htmlString += eval(self.children[0].children[0].name) + "\n"
+            out = eval(self.children[0].children[0].name)
+            markdownString += out["markdown"] + "\n"
+            htmlString += out["html"] + "\n"
             
         elif self.meta["type"] == "default":
             # if its height is 0, this is normal text
@@ -127,6 +133,9 @@ class Exportable:
                 htmlString += (
                     "<p align=\"justify\">"
                 )    
+                #markdownString += (
+                #    "<p align=\"justify\">"
+                #)    
                 
                 
             # dont forget the children
@@ -146,6 +155,9 @@ class Exportable:
                 htmlString += (
                     "</p>"
                 )    
+                #markdownString += (
+                #    "</p>"
+                #)    
         
         else:
             print(self.meta["type"])
@@ -186,7 +198,7 @@ class Exportable:
                 referenceLetter = chr(referenceNo+97)
                 self.getApex().referenceNo += 1
                 markdownString += (
-                    "<sup>" + referenceLetter + "</sup> "
+                    "<sup>[" + referenceLetter + "](" + reference + ")</sup> "
                 )
                 htmlString += (
                     "<sup><a href=" + reference + ">" + referenceLetter + "</a></sup> "
@@ -271,7 +283,8 @@ class Exportable:
         #    dotString += "node [ fontname=\"Handlee\" ];\n"
             
         #kwargs["boxParams"] = self.meta["boxParams"]
-        dotString += self.asDotNotation(startDepth=self.depth)
+        for c in self.children:
+            dotString += c.asDotNotation(startDepth=c.depth)
         dotString += "}"
 
         imagename = os.path.join("graphs", self.name.replace(" ", "_") + ".png")
@@ -291,12 +304,12 @@ class Exportable:
             os.system(runstring)
 
         # reference it in the markdown
-        markdownString = (
-            "\n![" + self.name + "](/" + imagename + '?raw=true""' + self.name + '")\n\n'
+        markdownString = self.name + "\n" + (
+            "\n![" + self.name + "](/" + imagename + '?raw=true)\n\n'
         )
 
         # and HTML
-        htmlString = "<img src=\"" + imagename + "\" width=\"100%\">\n"
+        htmlString = self.name + "<br>" + "<img src=\"" + imagename + "\" width=\"100%\">\n"
 
         return {"html":htmlString, "markdown":markdownString}
 
@@ -314,6 +327,10 @@ class Exportable:
         htmlString = ""
         htmlString += "<li>\n"
         htmlString += self.name
+        
+        referenceSuperscript = self.getReferenceSuperscript()
+        htmlString     += referenceSuperscript["html"]    
+        markdownString += referenceSuperscript["markdown"]
         
         # create a list of children, if applicable
         if len(self.children):

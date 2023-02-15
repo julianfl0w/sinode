@@ -24,6 +24,23 @@ def copyDictUnique(indict, modifier):
     else:
         return indict + modifier
 
+    
+def depthFirstDictMerge(priority, additions):
+    if type(priority) is dict:  
+        retval = priority.copy()
+        for k,v in additions.items():
+            if k in retval.keys():
+                retval[k] = depthFirstDictMerge(retval[k], v)
+            else:
+                retval[k] = v
+        return retval
+                
+    elif type(priority) is list:
+        return priority + additions
+        die
+    
+    else:
+        return priority
 
 #def dict2node(source, parent=None):
 #    retNodes = []
@@ -188,21 +205,31 @@ def NodeFromFile(filename):
 
 
 class Sinode(Node):
-    def __init__(self, parent=None):
+    def __init__(self, **kwargs):
         Node.__init__(self)
-        self.parent = parent  # enforce single inheritance
+        self.parent = kwargs.get("parent") # enforce single inheritance
         if not hasattr(self, "index"):
             self.index = 0
         # accumulate path
-        if parent is not None:
-            self.ancestors = parent.ancestors + [parent]
-            self.path = parent.path + [self.index]
+        if self.parent is not None:
+            self.ancestors = self.parent.ancestors + [self.parent]
+            self.path = self.parent.path + [self.index]
         else:
             self.ancestors = []
             self.path = [self.index]
 
         self.apex = self.getApex()
 
+    def toAbove(self, fnName, **kwargs):
+        # if this class has the function, 
+        # call it on v
+        fn = getattr(self, fnName, None)
+        if callable(fn):
+            return fn(**kwargs)
+        
+        #otherwise, try the parent
+        else:
+            return self.parent.toAbove(fnName, **kwargs)
 
 class Minode(Node):
     def __init__(self, parents):
