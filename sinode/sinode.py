@@ -196,6 +196,12 @@ class Node(Generic):
         else:
             raise Exception("Key not found above")
         
+    def flatten(self):
+        toret = [self]
+        for c in self.children:
+            toret += c.flatten()
+        return toret
+        
 def NodeFromFile(filename):
     # open a file, where you ant to store the data
     with open(filename, "rb") as f:

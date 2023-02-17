@@ -46,7 +46,7 @@ class Exportable:
         </style>
         </head>
     """
-            htmlString += "<body style=\"color:white;align:justify\">\n"
+            htmlString += "<body style=\"color:" + kwargs["textColor"] + ";align:justify\">\n"
         
             
         #if "font" in self.meta.keys():
@@ -74,22 +74,28 @@ class Exportable:
                 print(self.name)
                 htmlString += verseSuperscript["html"] + self.name + "\n"
                 markdownString += verseSuperscript["markdown"] + self.name + "\n"
-                htmlString += "<ul>"
+                if self.meta["topology"] != "flat":
+                    htmlString += "<ul>"
             else:
                 htmlString     += "<i>"
                 htmlString += "<ul style=\"list-style: none;padding-left: 0;\">"
             
             # start listing
-            for child in self.children:
-                markdownString += child.toList(depth = 0)["markdown"]
-                htmlString     += child.toList(depth = 0)["html"]
-                
-            htmlString += "</ul>"
+            if self.meta["topology"] == "flat":
+                htmlString += "<ul>\n"
+                for child in self.flatten()[1:]:
+                    htmlString     += "<li>" + child.name + "</li>\n"
+                    markdownString += "- " + child.name +"\n"
+                htmlString += "</ul>\n"
+            else:
+                for child in self.children:
+                    markdownString += child.toList(depth = 0)["markdown"]
+                    htmlString     += child.toList(depth = 0)["html"]
+                htmlString += "</ul>"
             
             if self.name == "Prompt":
                 htmlString     += "</i>"
                
-            
             referenceSuperscript = self.getReferenceSuperscript()
             htmlString     += referenceSuperscript["html"]    
             markdownString += referenceSuperscript["markdown"]
