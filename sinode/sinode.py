@@ -226,16 +226,19 @@ class Sinode(Node):
 
         self.apex = self.getApex()
 
-    def toAbove(self, fnName, **kwargs):
+    def toAbove(self, fnName, kwargs = {}):
         # if this class has the function, 
         # call it on v
         fn = getattr(self, fnName, None)
         if callable(fn):
-            return fn(**kwargs)
+            if kwargs == {}:
+                return fn()
+            else:
+                return fn(kwargs)
         
         #otherwise, try the parent
         else:
-            return self.parent.toAbove(fnName, **kwargs)
+            return self.parent.toAbove(fnName, kwargs)
 
 class Minode(Node):
     def __init__(self, parents):
