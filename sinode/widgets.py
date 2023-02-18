@@ -1,22 +1,22 @@
 from . import sinode
 
 import kivy.uix as uix
-#from kivy.uix.floatlayout import FloatLayout
-#from kivy.uix.gridlayout import GridLayout
-#from kivy.uix.textinput import TextInput
-#from kivy.uix.label import Label
-#from kivy.uix.treeview import TreeView
-#from kivy.uix.treeview import TreeViewNode
-#from kivy.uix.treeview import TreeViewLabel
-#from kivy.uix.scrollview import ScrollView
-#from kivy.uix.behaviors import DragBehavior
-#from kivy.uix.widget import Widget
-#from kivy.uix.boxlayout import BoxLayout
-#from kivy.uix.stencilview import StencilView
-#from kivy.uix.slider import Slider
-#from kivy.uix.spinner import Spinner
-#from kivy.uix.button import Button
-#from kivy.uix.dropdown import DropDown
+#from uix.floatlayout import FloatLayout
+#from uix.gridlayout import GridLayout
+#from uix.textinput import TextInput
+#from uix.label import Label
+#from uix.treeview import TreeView
+#from uix.treeview import TreeViewNode
+#from uix.treeview import TreeViewLabel
+#from uix.scrollview import ScrollView
+#from uix.behaviors import DragBehavior
+#from uix.widget import Widget
+#from uix.boxlayout import BoxLayout
+#from uix.stencilview import StencilView
+#from uix.slider import Slider
+#from uix.spinner import Spinner
+#from uix.button import Button
+#from uix.dropdown import DropDown
 
 from kivy.properties import (
     OptionProperty,
@@ -40,6 +40,30 @@ from kivy.clock import Clock
 # basic building of canvas.
 from kivy.graphics import Rectangle, Color, Line
 
+num2color = [
+    Color(0, 1, 0, mode="hsv"),  # black
+    Color(0, 1, 1, mode="hsv"),  # red
+    Color(30 / 360, 1, 1, mode="hsv"),  # orange
+    Color(60 / 360, 1, 1, mode="hsv"),  # yellow
+    Color(120 / 360, 1, 1, mode="hsv"),  # green
+    Color(240 / 360, 1, 1, mode="hsv"),  # blue
+    Color(300 / 360, 1, 1, mode="hsv"),  # violet
+    Color(0, 0, 0.5, mode="hsv"),  # grey
+    Color(0.5, 0.5, 0.5, mode="hsv"),  # brown
+    Color(0, 0, 1, mode="hsv"),  # white
+    Color(0, 1, 0, mode="hsv"),  # black
+    Color(0, 1, 1, mode="hsv"),  # red
+    Color(30 / 360, 1, 1, mode="hsv"),  # orange
+    Color(60 / 360, 1, 1, mode="hsv"),  # yellow
+    Color(120 / 360, 1, 1, mode="hsv"),  # green
+    Color(240 / 360, 1, 1, mode="hsv"),  # blue
+    Color(300 / 360, 1, 1, mode="hsv"),  # violet
+    Color(0, 0, 0.5, mode="hsv"),  # grey
+]
+
+num2colorList = [color2rgba(c) for c in num2color]
+
+
 
 class Slider(uix.slider.Slider, sinode.Sinode):
     def __init__(self, **kwargs):
@@ -56,20 +80,47 @@ class Slider(uix.slider.Slider, sinode.Sinode):
             self.dispatch("on_release")
             return True
 
-
-
 class TextInput(uix.textinput.TextInput, sinode.Sinode):
     def __init__(self, **kwargs):
         sinode.Sinode.__init__(self, **kwargs)
         uix.textinput.TextInput.__init__(self, **kwargs)
 
-class TreeViewLabel(sinode.Sinode, TreeViewLabel):
+class TreeViewLabel(sinode.Sinode, uix.treeviewlabel.TreeViewLabel):
     def __init__(self, **kwargs):
-        TreeViewLabel.__init__(self, **kwargs)
         sinode.Sinode.__init__(self, **kwargs)
+        TreeViewLabel.__init__(self, **kwargs)
+
+class LabeledTextEntry(sinode.Sinode, uix.gridview.GridView):
+    def __init__(self, **kwargs):
+        sinode.Sinode.__init__(self, **kwargs)
+        uix.gridview.GridView.__init__(self, **kwargs)
+        
+        #self.attackTimeInput = TextInput(text=".002", multiline=False)
+        #self.attackTimeInput.bind(on_text_validate=on_enter)
+        #self.add_widget(Label(text="Attack Time (s)"))
+        #self.add_widget(self.attackTimeInput)
+        
+        self.input = TextInput(**kwargs)
+        self.input.bind(on_text_validate=on_enter)
+        self.label = Label(text=text)
+        self.add_widget(self.label)
+        self.add_widget(self.input)
+        
+    
+class LabeledSlider(uix.gridview.GridView, sinode.Sinode):
+    def __init__(self, **kwargs):
+        GridLayout.__init__(self, cols=2)
+        sinode.Sinode.__init__(self, parent=self.parent)
+        
+        self.input = uix.slider.Slider(**kwargs)
+        self.input.bind(on_text_validate=on_enter)
+        self.label = Label(text=text)
+        self.add_widget(self.label)
+        self.add_widget(self.input)
 
 
-class TreeView(sinode.Sinode, TreeView):
+
+class TreeView(sinode.Sinode, uix.treeview.TreeView):
     def __init__(self, **kwargs):
         TreeView.__init__(self, **kwargs)
         sinode.Sinode.__init__(self, **kwargs)
@@ -102,18 +153,18 @@ class TreeView(sinode.Sinode, TreeView):
 
 class ScrollView(sinode.Sinode, ScrollView):
     def __init__(self, **kwargs):
-        kivy.uix.scrollview.ScrollView.__init__(self, **kwargs)
+        uix.scrollview.ScrollView.__init__(self, **kwargs)
         sinode.Sinode.__init__(self, **kwargs)
 
 
-class TreeViewButton(sinode.Sinode, Button, kivy.uix.treeview.TreeViewNode):
+class TreeViewButton(sinode.Sinode, Button, uix.treeview.TreeViewNode):
     def __init__(self, **kwargs):
-        kivy.uix.treeview.TreeViewNode.__init__(self)
+        uix.treeview.TreeViewNode.__init__(self)
         Button.__init__(self)
         sinode.Sinode.__init__(self, **kwargs)
 
 
-class DragLabel(DragBehavior, kivy.uix.label.Label, kivy.uix.treeview.TreeViewNode):
+class DragLabel(DragBehavior, uix.label.Label, uix.treeview.TreeViewNode):
     pass
 
 # This class is unused. You should use TreeView instead
@@ -157,3 +208,49 @@ class RecursiveDropdown(DropDown):
         # values=([p.displayName for p in self.patches]),
         # patchDropdown.index = i
         # patchDropdown.bind(text=show_selected_value)
+
+class Point:
+    def __init__(self, coords):
+        self.x = coords[0]
+        self.y = coords[1]
+        self.coords = coords
+
+    def move(self, coords):
+        self.x = coords[0]
+        self.y = coords[1]
+        self.coords = coords
+
+    def findNeighbors(self, points):
+        self.leftwardPoint = points[0]
+        self.rightwardPoint = points[-1]
+        for p in points:
+            if p.x < self.x:
+                if (self.x - p.x) < (self.x - self.leftwardPoint.x):
+                    self.leftwardPoint = p
+            elif p.x > self.x:
+                if (p.x - self.x) < (self.rightwardPoint.x - self.x):
+                    self.rightwardPoint = p
+
+    def closestPoint(self, points):
+        closestPoint = points[0]
+        for p in points:
+            if abs(p.x - self.x) > abs(closestPoint.x - self.x):
+                closestPoint = p
+        return closestPoint
+
+def color2rgba(c):
+    # return [c.r,c.b,c.g,c.a]
+    return [c.r, c.b, c.g, 1]
+
+
+def guiFromDict(indict, parent):
+    
+    meta = indict["meta"]
+    meta["parent"] = parent
+    node = meta["class"](meta)
+    for k, v in indict.items():
+        if k == "meta":
+            continue
+        
+        node.children += guiFromDict(v, self)
+

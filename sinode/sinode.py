@@ -201,6 +201,18 @@ class Node(Generic):
         for c in self.children:
             toret += c.flatten()
         return toret
+    
+    def get(self):
+        if hasattr(self, value):
+            return self.value
+        elif hasattr(self, text):
+            return self.text
+        else:
+            return None
+        
+    def update(self):
+        for c in self.children:
+            c.update()
         
 def NodeFromFile(filename):
     # open a file, where you ant to store the data
@@ -209,6 +221,13 @@ def NodeFromFile(filename):
         a = pickle.load(f)
     return a
 
+
+def NodeFromDict(indict):
+    # open a file, where you ant to store the data
+    with open(filename, "rb") as f:
+        # dump information to that file
+        a = pickle.load(f)
+    return a
 
 class Sinode(Node):
     def __init__(self, **kwargs):
