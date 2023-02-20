@@ -65,6 +65,28 @@ def depthFirstDictMerge(priority, additions):
 #    else:
 #        return Node(name=source)
 
+class Leaf(object):
+    def __init__(self, **kwargs):
+        self.proc_kwargs(**kwargs)
+    def proc_kwargs(self, **kwargs):
+        for key, value in kwargs.items():
+            exec("self." + key + " = value")
+        self.kwargs = kwargs.copy()
+
+    def toAbove(self, fnName, kwargs = {}):
+        # if this class has the function, 
+        # call it on v
+        fn = getattr(self, fnName, None)
+        if callable(fn):
+            if kwargs == {}:
+                return fn()
+            else:
+                return fn(kwargs)
+        
+        #otherwise, try the parent
+        else:
+            return self.parent.toAbove(fnName, kwargs)
+
 class Node(Generic):
     
     def sortChildrenByPriority(self):
@@ -203,13 +225,26 @@ class Node(Generic):
         return toret
     
     def get(self):
-        if hasattr(self, value):
-            return self.value
-        elif hasattr(self, text):
-            return self.text
-        else:
-            return None
+        retdict = {}
+        if hasattr(self, "value"):
+            retdict["value"] = self.value
+        elif hasattr(self, "text"):
+            retdict["text"] = self.text
         
+        if hasattr(self, "name"):
+            key = self.name
+        else:
+            key = str(type(self))
+        if hasattr(self, "index"):
+            key += str(self.index)
+
+        for c in self.children:
+            if hasattr(c, "get"):
+                k, cdict = c.get()
+                retdict[k] = cdict
+
+        return key, retdict
+
     def update(self):
         for c in self.children:
             c.update()
