@@ -65,13 +65,28 @@ def depthFirstDictMerge(priority, additions):
 #    else:
 #        return Node(name=source)
 
-class Leaf(object):
-    def __init__(self, **kwargs):
-        self.proc_kwargs(**kwargs)
-    def proc_kwargs(self, **kwargs):
-        for key, value in kwargs.items():
-            exec("self." + key + " = value")
-        self.kwargs = kwargs.copy()
+class Upward(object):
+
+    def get(self):
+        retdict = {}
+        if hasattr(self, "value"):
+            retdict["value"] = self.value
+        if hasattr(self, "text"):
+            retdict["text"] = self.text
+        
+        if hasattr(self, "name"):
+            key = self.name
+        else:
+            key = str(type(self))
+        if hasattr(self, "index"):
+            key += str(self.index)
+
+        for c in self.children:
+            if hasattr(c, "get"):
+                k, cdict = c.get()
+                retdict[k] = cdict
+
+        return key, retdict
 
     def toAbove(self, fnName, kwargs = {}):
         # if this class has the function, 
@@ -87,7 +102,16 @@ class Leaf(object):
         else:
             return self.parent.toAbove(fnName, kwargs)
 
-class Node(Generic):
+
+class Leaf(Upward):
+    def __init__(self, **kwargs):
+        self.proc_kwargs(**kwargs)
+    def proc_kwargs(self, **kwargs):
+        for key, value in kwargs.items():
+            exec("self." + key + " = value")
+        self.kwargs = kwargs.copy()
+
+class Node(Generic, Upward):
     
     def sortChildrenByPriority(self):
         for c in self.children:
@@ -224,26 +248,6 @@ class Node(Generic):
             toret += c.flatten()
         return toret
     
-    def get(self):
-        retdict = {}
-        if hasattr(self, "value"):
-            retdict["value"] = self.value
-        elif hasattr(self, "text"):
-            retdict["text"] = self.text
-        
-        if hasattr(self, "name"):
-            key = self.name
-        else:
-            key = str(type(self))
-        if hasattr(self, "index"):
-            key += str(self.index)
-
-        for c in self.children:
-            if hasattr(c, "get"):
-                k, cdict = c.get()
-                retdict[k] = cdict
-
-        return key, retdict
 
     def update(self):
         for c in self.children:

@@ -78,14 +78,14 @@ from kivy.uix.slider import Slider
 class Slider(kivy.uix.slider.Slider, sinode.Leaf):
     def __init__(self, **kwargs):
         sinode.Leaf.__init__(self, parent=self.parent)
-        self.register_event_type("on_release")
         kivy.uix.slider.Slider.__init__(self, **kwargs)
+        self.register_event_type("on_release")
 
     def on_release(self):
         pass
 
     def on_touch_up(self, touch):
-        super(ModifiedSlider, self).on_touch_up(touch)
+        kivy.uix.slider.Slider.on_touch_up(self,touch)
         if touch.grab_current == self:
             self.dispatch("on_release")
             return True
@@ -93,18 +93,13 @@ class Slider(kivy.uix.slider.Slider, sinode.Leaf):
 from kivy.uix.textinput import TextInput
 class TextInput(kivy.uix.textinput.TextInput, sinode.Leaf):
     def __init__(self, **kwargs):
-        sinode.Leaf.__init__(self, **kwargs)
+        sinode.Leaf.__init__(self)
         kivy.uix.textinput.TextInput.__init__(self, **kwargs)
 
-from kivy.uix.treeview import TreeViewLabel
-class TreeViewLabel(sinode.Leaf, kivy.uix.treeview.TreeViewLabel):
-    def __init__(self, **kwargs):
-        sinode.Leaf.__init__(self, **kwargs)
-        TreeViewLabel.__init__(self, **kwargs)
+
 
 class LabeledTextEntry(sinode.Sinode, kivy.uix.gridlayout.GridLayout):
     def __init__(self, **kwargs):
-        sinode.Sinode.__init__(self, **kwargs)
         kivy.uix.gridlayout.GridLayout.__init__(self, **kwargs)
         
         #self.attackTimeInput = TextInput(text=".002", multiline=False)
@@ -135,24 +130,20 @@ from kivy.uix.label import Label
 class Label(kivy.uix.label.Label, sinode.Leaf):
     def __init__(self, **kwargs):
         sinode.Leaf.__init__(self, parent=self.parent)
-        kivy.uix.label.Label.__init__(self, cols=2)
+        kivy.uix.label.Label.__init__(self, **kwargs)
 
 
 from kivy.uix.spinner import Spinner
 class Spinner(kivy.uix.spinner.Spinner, sinode.Leaf):
     def __init__(self, **kwargs):
         sinode.Leaf.__init__(self, parent=self.parent)
-        kivy.uix.spinner.Spinner.__init__(self, cols=2)
+        kivy.uix.spinner.Spinner.__init__(self, **kwargs)
 
-class TreeView(sinode.Sinode, kivy.uix.treeview.TreeView):
-    def __init__(self, **kwargs):
-        sinode.Sinode.__init__(self, **kwargs)
-        TreeView.__init__(self, **kwargs)
-
-    def populate(self, indict, path=[]):
+class Populatable:
+    def populate(self, indict):
         
         # if the supplied "dictionary" is a SamplePatch, create a button for it
-        if isinstance(indict, SamplePatch):
+        if type(indict) is not dict:
             newNode = TreeViewButton(text=indict.displayName, size_hint_y=None, parent = self)
             self.add_node(newNode, self.parent)
 
@@ -172,7 +163,18 @@ class TreeView(sinode.Sinode, kivy.uix.treeview.TreeView):
                     text=k, is_open=False, size_hint_y=None, parent=self.parent
                 )
             self.add_node(newNode)
-            newNode.populate(self, tree_node, v, path=path + [k])
+            newNode.populate(v)
+
+
+from kivy.uix.treeview import TreeViewLabel
+class TreeViewLabel(sinode.Leaf, kivy.uix.treeview.TreeViewLabel, Populatable):
+    def __init__(self, **kwargs):
+        kivy.uix.treeview.TreeViewLabel.__init__(self, **kwargs)
+
+class TreeView(sinode.Sinode, kivy.uix.treeview.TreeView, Populatable):
+    def __init__(self, **kwargs):
+        sinode.Sinode.__init__(self, **kwargs)
+        kivy.uix.treeview.TreeView.__init__(self, **kwargs)
 
 from kivy.uix.scrollview import ScrollView
 class ScrollView(sinode.Sinode, kivy.uix.scrollview.ScrollView):
@@ -182,6 +184,13 @@ class ScrollView(sinode.Sinode, kivy.uix.scrollview.ScrollView):
 
 
 from kivy.uix.button import Button
+class Button(sinode.Sinode, kivy.uix.button.Button):
+    def __init__(self, **kwargs):
+        kivy.uix.button.Button.__init__(self, **kwargs)
+        sinode.Sinode.__init__(self, **kwargs)
+
+
+
 class TreeViewButton(sinode.Sinode, kivy.uix.button.Button, kivy.uix.treeview.TreeViewNode):
     def __init__(self, **kwargs):
         kivy.uix.treeview.TreeViewNode.__init__(self)
