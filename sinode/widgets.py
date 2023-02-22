@@ -139,16 +139,26 @@ class Spinner(kivy.uix.spinner.Spinner, sinode.Leaf):
         sinode.Leaf.__init__(self, parent=self.parent)
         kivy.uix.spinner.Spinner.__init__(self, **kwargs)
 
-class Populatable:
-    def populate(self, indict):
-        
+from kivy.uix.treeview import TreeViewLabel
+class TreeViewLabel(sinode.Leaf, kivy.uix.treeview.TreeViewLabel):
+    def __init__(self, **kwargs):
+        sinode.Sinode.__init__(self, **kwargs)
+        kivy.uix.treeview.TreeViewLabel.__init__(self, **kwargs)
+
+class TreeView(sinode.Sinode, kivy.uix.treeview.TreeView):
+    def __init__(self, **kwargs):
+        #sinode.Sinode.__init__(self, **kwargs)
+        kivy.uix.treeview.TreeView.__init__(self, **kwargs)
+
+    def populate(self, indict, parent=None):
+        print(indict)
         # if the supplied "dictionary" is a SamplePatch, create a button for it
         if type(indict) is not dict:
-            newNode = TreeViewButton(text=indict.displayName, size_hint_y=None, parent = self)
-            self.add_node(newNode, self.parent)
+            newNode = TreeViewButton(text=indict.displayName, size_hint_y=None)
+            self.add_node(node = newNode, parent=parent )
 
             def mf_callback(instance):
-                instance.toAbove("loadPatch", {"patch": instance.patch})
+                instance.toAbove("loadByPath", {"path": instance.patch.sfzFilename})
 
             newNode.patch = indict
             newNode.bind(on_release=mf_callback)
@@ -156,25 +166,13 @@ class Populatable:
 
         # otherwise, create a recursive label
         for k, v in indict.items():
+            newNode = TreeViewLabel(text=k, is_open=False, size_hint_y=None)
+
+            self.populate(indict = v, parent=newNode) 
             if self.parent is None:
-                newNode = TreeViewLabel(text=k, is_open=False, size_hint_y=None)
+                self.add_node(node = newNode)
             else:
-                newNode = TreeViewLabel(
-                    text=k, is_open=False, size_hint_y=None, parent=self.parent
-                )
-            self.add_node(newNode)
-            newNode.populate(v)
-
-
-from kivy.uix.treeview import TreeViewLabel
-class TreeViewLabel(sinode.Leaf, kivy.uix.treeview.TreeViewLabel, Populatable):
-    def __init__(self, **kwargs):
-        kivy.uix.treeview.TreeViewLabel.__init__(self, **kwargs)
-
-class TreeView(sinode.Sinode, kivy.uix.treeview.TreeView, Populatable):
-    def __init__(self, **kwargs):
-        sinode.Sinode.__init__(self, **kwargs)
-        kivy.uix.treeview.TreeView.__init__(self, **kwargs)
+                self.add_node(node = newNode, parent=parent)
 
 from kivy.uix.scrollview import ScrollView
 class ScrollView(sinode.Sinode, kivy.uix.scrollview.ScrollView):

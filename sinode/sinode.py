@@ -102,6 +102,11 @@ class Upward(object):
         else:
             return self.parent.toAbove(fnName, kwargs)
 
+    def getApex(self):
+        if self.parent is None:
+            return self
+        return self.parent.getApex()
+    
 
 class Leaf(Upward):
     def __init__(self, **kwargs):
@@ -213,11 +218,6 @@ class Node(Generic, Upward):
     def isApex(self):
         return self.parent is None
 
-    def getApex(self):
-        if self.parent is None:
-            return self
-        return self.parent.getApex()
-    
     def computeHeight(self):
         if not len(self.children):
             self._height = 0
