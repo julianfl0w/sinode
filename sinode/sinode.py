@@ -102,6 +102,15 @@ class Upward(object):
         else:
             return self.parent.toAbove(fnName, kwargs)
 
+    def setAbove(self, varName, value):
+        # if this class has the value, set it
+        if self.hasattr(varName):
+            self.varName = value
+
+        #otherwise, try the parent
+        else:
+            return self.parent.setAbove(varName, value)
+
     def getApex(self):
         if self.parent is None:
             return self

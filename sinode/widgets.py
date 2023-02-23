@@ -158,7 +158,7 @@ class TreeView(sinode.Sinode, kivy.uix.treeview.TreeView):
             self.add_node(node = newNode, parent=parent )
 
             def mf_callback(instance):
-                instance.toAbove("loadByPath", {"path": instance.patch.sfzFilename})
+                instance.toAbove("selectPatch", {"patch": instance.patch})
 
             newNode.patch = indict
             newNode.bind(on_release=mf_callback)
@@ -169,7 +169,7 @@ class TreeView(sinode.Sinode, kivy.uix.treeview.TreeView):
             newNode = TreeViewLabel(text=k, is_open=False, size_hint_y=None)
 
             self.populate(indict = v, parent=newNode) 
-            if self.parent is None:
+            if parent is None:
                 self.add_node(node = newNode)
             else:
                 self.add_node(node = newNode, parent=parent)
@@ -187,13 +187,11 @@ class Button(sinode.Sinode, kivy.uix.button.Button):
         kivy.uix.button.Button.__init__(self, **kwargs)
         sinode.Sinode.__init__(self, **kwargs)
 
-
-
 class TreeViewButton(sinode.Sinode, kivy.uix.button.Button, kivy.uix.treeview.TreeViewNode):
     def __init__(self, **kwargs):
+        sinode.Leaf.__init__(self, **kwargs)
         kivy.uix.treeview.TreeViewNode.__init__(self)
-        Button.__init__(self)
-        sinode.Sinode.__init__(self, **kwargs)
+        kivy.uix.button.Button.__init__(self)
 
 
 #class DragLabel(DragBehavior, kivy.uix.label.Label, kivy.uix.treeview.TreeViewNode):
@@ -241,6 +239,35 @@ class TreeViewButton(sinode.Sinode, kivy.uix.button.Button, kivy.uix.treeview.Tr
 #        # patchDropdown.index = i
 #        # patchDropdown.bind(text=show_selected_value)
 
+
+
+def guiFromDict(indict, parent):
+    
+    meta = indict["meta"]
+    theclass = meta["klass"]
+    print(theclass)
+    node = theclass(**meta["kivy"])
+    node.proc_kwargs(**meta)
+
+    if "callbacks" in meta.keys():
+        for k, v in meta["callbacks"].items():
+            exec("node.bind("+k+"=v)")
+    
+    for k, v in indict.items():
+        if k == "meta":
+            continue
+
+        if "count" in meta.keys:
+            for i in range(meta["count"]):
+                newChild = guiFromDict(v, node)
+                node.add_widget(newChild)
+
+        else:
+            newChild = guiFromDict(v, node)
+            node.add_widget(newChild)
+
+    return node
+
 class Point:
     def __init__(self, coords):
         self.x = coords[0]
@@ -270,30 +297,3 @@ class Point:
                 closestPoint = p
         return closestPoint
 
-
-def guiFromDict(indict, parent):
-    
-    meta = indict["meta"]
-    theclass = meta["klass"]
-    print(theclass)
-    node = theclass(**meta["kivy"])
-    node.proc_kwargs(**meta)
-
-    if "callbacks" in meta.keys():
-        for k, v in meta["callbacks"].items():
-            exec("node.bind("+k+"=v)")
-    
-    for k, v in indict.items():
-        if k == "meta":
-            continue
-
-        if "count" in meta.keys:
-            for i in range(meta["count"]):
-                newChild = guiFromDict(v, node)
-                node.add_widget(newChild)
-
-        else:
-            newChild = guiFromDict(v, node)
-            node.add_widget(newChild)
-
-    return node
