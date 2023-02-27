@@ -8,6 +8,9 @@ class Generic(object):
         self.children = []
         self.proc_kwargs(**kwargs)
     def proc_kwargs(self, **kwargs):
+        if hasattr(self, "kwdefault"):
+            kwargs = depthFirstDictMerge(priority = kwargs, additions=self.kwdefault)
+
         for key, value in kwargs.items():
             exec("self." + key + " = value")
         self.kwargs = kwargs.copy()
@@ -116,6 +119,7 @@ class Upward(object):
             return self
         return self.parent.getApex()
     
+
 
 class Leaf(Upward):
     def __init__(self, **kwargs):
@@ -245,11 +249,11 @@ class Node(Generic, Upward):
     
     def fromAbove(self, key):
         if hasattr(self, key):
-            return self.key
+            return eval("self." + key)
         elif self.parent is not None:
             return self.parent.fromAbove(key)
         else:
-            raise Exception("Key not found above")
+            raise Exception("Key " + key + " not found above")
         
     def flatten(self):
         toret = [self]
@@ -279,7 +283,7 @@ def NodeFromDict(indict):
 
 class Sinode(Node):
     def __init__(self, **kwargs):
-        Node.__init__(self)
+        Node.__init__(self, **kwargs)
         self.parent = kwargs.get("parent") # enforce single inheritance
         if not hasattr(self, "index"):
             self.index = 0
