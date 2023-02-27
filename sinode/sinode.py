@@ -5,8 +5,12 @@ here = os.path.dirname(os.path.abspath(__file__))
 
 class Generic(object):
     def __init__(self, **kwargs):
-        self.children = []
+        if not hasattr(self, "children"):
+            self.children = []
         self.proc_kwargs(**kwargs)
+        if hasattr(self, "parent"):
+            if self.parent is not None and self not in self.parent.children:
+                self.parent.children += [self]
     def proc_kwargs(self, **kwargs):
         if hasattr(self, "kwdefault"):
             kwargs = depthFirstDictMerge(priority = kwargs, additions=self.kwdefault)
