@@ -11,15 +11,20 @@ class Generic(object):
         if hasattr(self, "parent"):
             if self.parent is not None and self not in self.parent.children:
                 self.parent.children += [self]
-    def proc_kwargs(self, **kwargs):
-        if hasattr(self, "kwdefault"):
-            kwargs = depthFirstDictMerge(priority = kwargs, additions=self.kwdefault)
 
+    def proc_kwargs(self, **kwargs):
+        overwrite = kwargs.get("overwrite") == True
+        propagate = kwargs.get("propagate") == True
+        if overwrite:
+            die
         for key, value in kwargs.items():
-            exec("self." + key + " = value")
-        self.kwargs = kwargs.copy()
-        for c in self.children:
-            c.proc_kwargs(**self.kwargs)
+            if not hasattr(self, key) or overwrite:
+                exec("self." + key + " = value")
+                
+        if propagate:
+            self.kwargs = kwargs.copy()
+            for c in self.children:
+                c.proc_kwargs(**self.kwargs)
 
             
 def copyDictUnique(indict, modifier):
