@@ -116,8 +116,8 @@ class Upward(object):
 
     def setAbove(self, varName, value):
         # if this class has the value, set it
-        if self.hasattr(varName):
-            self.varName = value
+        if hasattr(self, varName):
+            exec("self." + varName + " = value")
 
         #otherwise, try the parent
         else:

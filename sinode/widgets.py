@@ -158,7 +158,7 @@ class TreeView(sinode.Sinode, kivy.uix.treeview.TreeView):
             self.add_node(node = newNode, parent=parent )
 
             def mf_callback(instance):
-                instance.toAbove("selectPatch", {"patch": instance.patch})
+                instance.toAbove("changePatch", {"patch": instance.patch})
 
             newNode.patch = indict
             newNode.bind(on_release=mf_callback)
