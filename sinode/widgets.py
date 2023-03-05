@@ -166,7 +166,7 @@ class TreeView(sinode.Sinode, kivy.uix.treeview.TreeView):
 
         # otherwise, create a recursive label
         for k, v in indict.items():
-            newNode = TreeViewLabel(text=k, is_open=False, size_hint_y=None)
+            newNode = TreeViewLabel(text=k, is_open=True, size_hint_y=None)
 
             self.populate(indict = v, parent=newNode) 
             if parent is None:
