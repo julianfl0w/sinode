@@ -1,5 +1,6 @@
 import pickle
 import os
+import json
 here = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -140,6 +141,21 @@ class Leaf(Upward):
 
 class Node(Generic, Upward):
     
+    def getByField(self, name, val):
+        if hasattr(self, name):
+            print(eval("self." + name))
+            if eval("self." + name) == val:
+                return self
+        elif len(self.children):
+            for c in self.children:
+                retval =  c.getByField(name, val)
+                if retval is not None:
+                    return retval
+        return None
+
+    def dump(self):
+        print(json.dumps(self.asDict(), indent=2))
+
     def sortChildrenByPriority(self):
         for c in self.children:
             c.sortChildrenByPriority()
