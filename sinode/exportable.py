@@ -105,7 +105,11 @@ class Exportable:
             htmlString     += "\n\n"
 
         elif self.meta["type"] == "eval":
-            out = eval(self.children[0].children[0].name)
+            print("Bleh")
+            print(self.name)
+            toEval = self.children[0].children[0].name
+            print(toEval)
+            out = eval(toEval)
             markdownString += out["markdown"] + "\n"
             htmlString += out["html"] + "\n"
             
