@@ -105,10 +105,7 @@ class Exportable:
             htmlString     += "\n\n"
 
         elif self.meta["type"] == "eval":
-            print("Bleh")
-            print(self.name)
-            toEval = self.children[0].children[0].name
-            print(toEval)
+            toEval = self.meta["command"]
             out = eval(toEval)
             markdownString += out["markdown"] + "\n"
             htmlString += out["html"] + "\n"
@@ -194,7 +191,7 @@ class Exportable:
             htmlString += (
                 "<sup>" + str(verseNo) + "</sup> "
             )    
-            print("incrementing")
+            #print("incrementing")
             self.getApex().verseNo += 1
         return {"html":htmlString, "markdown":markdownString}
     
