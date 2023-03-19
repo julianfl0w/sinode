@@ -129,6 +129,8 @@ class Upward(object):
             return self
         return self.parent.getApex()
     
+    def debug(self, *args):
+        self.fromAbove("_debug")(*args)
 
 
 class Leaf(Upward):
@@ -178,10 +180,10 @@ class Node(Generic, Upward):
                 retList += [str(child)]  # + " " + hex(id(child))]
 
         retDict = {}
-		if hasattr(self, "name"):
-        	retDict[str(type(self))] = retList
-		else:
-        	retDict[str(type(self))] = retList
+        if hasattr(self, "name"):
+            retDict[str(type(self))] = retList
+        else:
+            retDict[str(type(self))] = retList
         return retDict
 
     def asNamedDict(self):
