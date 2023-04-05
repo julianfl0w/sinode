@@ -23,7 +23,6 @@ def toPDF(intext, basedir = here, ext="html"):
 class FractalBook(sinode.Node, exportable.Exportable):
     def __init__(self, **kwargs):
         # defaults
-        self.name = ""
         self.nodeNumber = 0
         self.verseNo = 0
         self.referenceNo = 0
@@ -44,6 +43,8 @@ class FractalBook(sinode.Node, exportable.Exportable):
         if not os.path.exists("graphs"):
             os.mkdir("graphs")
         
+
+        # Process a directory
         if self.origin == "directory":
             
             self.name = self.source.split(os.sep)[-1]
@@ -62,15 +63,17 @@ class FractalBook(sinode.Node, exportable.Exportable):
 
                 # if its a dir, its a subcategory
                 if os.path.isdir(resolved):
-                    self.children += [FractalBook(parent = self, origin = "directory", source = resolved, depth=self.depth + 1)]
+                    FractalBook(parent = self, origin = "directory", source = resolved, depth=self.depth + 1)
 
                 # otherwise, if it's a python file, execute it
                 # each python file is a chapter, containing a list of paragraphs
                 else:
                     if file.endswith(".py"):
                         print("processing file " + file)
-                        self.children += [FractalBook(parent = self, origin = "file", source = resolved, depth=self.depth + 1)]
-                        
+                        FractalBook(parent = self, origin = "file", source = resolved, depth=self.depth + 1)
+
+        # process a file
+        # by reading it, and processing as texr  
         elif self.origin == "file":
             self.name = self.source.split(os.sep)[-1].replace(".py", "")
             with open(self.source, "r") as f:
@@ -87,18 +90,23 @@ class FractalBook(sinode.Node, exportable.Exportable):
             self.origin = "sentence"
         
         self.computeHeightNoLists()
-        self.sortChildrenByPriority()
+
+        # if this is the apex, recursively 
+        # sort children
+        if self.parent is None:
+            self.sortChildrenByPriority()
         
+    
             
     def processText(self):
         # if its a list, add all elements as children
         if type(self.source) is list:
             for element in self.source:
-                self.children += [FractalBook(parent = self, depth = self.depth+1, name = "", origin="text", source=element)]
+                FractalBook(parent = self, depth = self.depth+1, name = "", origin="text", source=element)
                 self.meta = sinode.depthFirstDictMerge({"type": "list"}, self.meta)
         
         # similar with dictionary, except the elements are named
-        if type(self.source) is dict:
+        elif type(self.source) is dict:
             for k, v in self.source.items():
                 # read meta, dont add as child
                 if k == "meta":
@@ -108,7 +116,7 @@ class FractalBook(sinode.Node, exportable.Exportable):
                     #for k, v in self.meta.items():
                     #    exec("self." + k + " = v")
                     continue
-                self.children += [FractalBook(parent = self, depth = self.depth+1, name = k, origin="text", source=v)]
+                FractalBook(parent = self, depth = self.depth+1, name = k, origin="text", source=v)
         
         else:
             self.name = self.source

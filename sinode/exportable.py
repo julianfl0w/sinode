@@ -116,8 +116,8 @@ class Exportable:
                 # print verse number and name
                 verseSuperscript = self.addVerseNo()
                 referenceSuperscript = self.getReferenceSuperscript()
-                htmlString     += verseSuperscript["html"]     + self.name + referenceSuperscript["html"]    
-                markdownString += verseSuperscript["markdown"] + self.name + referenceSuperscript["markdown"]
+                htmlString     += verseSuperscript["html"]     + str(self.name) + referenceSuperscript["html"]    
+                markdownString += verseSuperscript["markdown"] + str(self.name) + referenceSuperscript["markdown"]
                 
                 if markdownString[-1] not in [".", "!", ":", ",", ">", "?", "\n"]:
                     htmlString     += ". "

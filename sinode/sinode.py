@@ -171,19 +171,20 @@ class Node(Generic, Upward):
 
         return retstr
 
-    def asDict(self, index=0):
-        retList = []
+    def asDict(self, depth=0):
+        childrenList = {}
         for i, child in enumerate(self.children):
-            try:
-                retList += [child.asDict(index = i)]
-            except:
-                retList += [str(child)]  # + " " + hex(id(child))]
+            if isinstance(child, Generic):
+                for childName, child in child.asDict(depth=depth+1).items():
+                    childrenList[str(i) + ":" + childName] = child
+            else:
+                childrenList[str(i) + ":" + child.name] = {}
 
         retDict = {}
         if hasattr(self, "name"):
-            retDict[str(type(self))] = retList
+            retDict[self.name] = childrenList
         else:
-            retDict[str(type(self))] = retList
+            retDict[str(type(self))] = childrenList
         return retDict
 
     def asNamedDict(self):
