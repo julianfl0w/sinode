@@ -133,13 +133,9 @@ class Upward(object):
         self.fromAbove("_debug")(*args)
 
 
-class Leaf(Upward):
+class Leaf(Generic, Upward):
     def __init__(self, **kwargs):
         self.proc_kwargs(**kwargs)
-    def proc_kwargs(self, **kwargs):
-        for key, value in kwargs.items():
-            exec("self." + key + " = value")
-        self.kwargs = kwargs.copy()
 
 class Node(Generic, Upward):
     
@@ -178,7 +174,10 @@ class Node(Generic, Upward):
                 for childName, child in child.asDict(depth=depth+1).items():
                     childrenList[str(i) + ":" + childName] = child
             else:
-                childrenList[str(i) + ":" + child.name] = {}
+                if hasattr(child, "name"):
+                    childrenList[str(i) + ":" + child.name] = {}
+                else:
+                    childrenList[str(i) + ":" +str(child)] = {}
 
         retDict = {}
         if hasattr(self, "name"):
@@ -329,6 +328,7 @@ class Sinode(Node):
         self.apex = self.getApex()
 
     def toAbove(self, fnName, kwargs = {}):
+        print(self)
         # if this class has the function, 
         # call it on v
         fn = getattr(self, fnName, None)
