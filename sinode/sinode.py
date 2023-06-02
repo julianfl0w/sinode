@@ -28,7 +28,7 @@ class Generic(object):
                 c.proc_kwargs(**self.kwargs)
 
     def setDefaults(self, **kwargs):
-    	proc_kwargs(self, **kwargs)
+    	self.proc_kwargs(**kwargs)
             
 def copyDictUnique(indict, modifier):
     outdict = {}
