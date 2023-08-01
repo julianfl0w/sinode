@@ -75,23 +75,23 @@ class Exportable:
                 htmlString += verseSuperscript["html"] + self.name + "\n"
                 markdownString += verseSuperscript["markdown"] + self.name + "\n"
                 if self.meta["topology"] != "flat":
-                    htmlString += "<ul>"
+                    htmlString += "<ol>"
             else:
                 htmlString     += "<i>"
-                htmlString += "<ul style=\"list-style: none;padding-left: 0;\">"
+                htmlString += "<ol style=\"list-style: none;padding-left: 0;\">"
             
             # start listing
             if self.meta["topology"] == "flat":
-                htmlString += "<ul>\n"
+                htmlString += "<ol>\n"
                 for child in self.flatten()[1:]:
                     htmlString     += "<li>" + child.name + "</li>\n"
                     markdownString += "- " + child.name +"\n"
-                htmlString += "</ul>\n"
+                htmlString += "</ol>\n"
             else:
                 for child in self.children:
                     markdownString += child.toList(depth = 0)["markdown"]
                     htmlString     += child.toList(depth = 0)["html"]
-                htmlString += "</ul>"
+                htmlString += "</ol>"
             
             if self.name == "Prompt":
                 htmlString     += "</i>"
@@ -358,10 +358,10 @@ class Exportable:
         
         # create a list of children, if applicable
         if len(self.children):
-            htmlString += "<ul>\n"
+            htmlString += "<ol>\n"
             for c in self.children:
                 htmlString += c.toList(depth=depth + 1)["html"]
-            htmlString += "</ul>\n"
+            htmlString += "</ol>\n"
 
         # end self as item
         htmlString += "</li>"
@@ -372,7 +372,7 @@ class Exportable:
         
         markdownString = ""
         htmlString = ""
-        if hasattr(self, "tableOfContentsSkip"):
+        if "tableOfContentsSkip" in self.meta.keys():
             return {"html":htmlString, "markdown":markdownString}
 
         if self.depth > maxDepth and maxDepth >= 0:
