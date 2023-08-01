@@ -3,6 +3,7 @@ import os
 import json
 here = os.path.dirname(os.path.abspath(__file__))
 
+from inspect import getframeinfo, stack
 
 class Generic(object):
     def __init__(self, **kwargs):
@@ -131,8 +132,15 @@ class Upward(object):
             return self
         return self.parent.getApex()
     
+    #def debug(self, *args):
+    #    self.fromAbove("_debug")(*args)
+
     def debug(self, *args):
-        self.fromAbove("_debug")(*args)
+        if not (hasattr(self, "DEBUG") and self.DEBUG):
+            caller = getframeinfo(stack()[1][0])
+            print(
+                "%s:%d - %s" % (os.path.basename(caller.filename), caller.lineno, args)
+            )  # python3 syntax self.debug
 
 
 class Leaf(Generic, Upward):
@@ -187,6 +195,12 @@ class Node(Generic, Upward):
         else:
             retDict[str(type(self))] = childrenList
         return retDict
+    
+    def asFlare(self):
+        if len(self.children) < 1:
+            return []
+        result = {'name': self.name, 'children': [c.asFlare() for c in self.children]}
+        return result
 
     def asNamedDict(self):
         retList = []
@@ -282,10 +296,14 @@ class Node(Generic, Upward):
     def fromAbove(self, key):
         if hasattr(self, key):
             return eval("self." + key)
-        elif self.parent is not None:
-            return self.parent.fromAbove(key)
-        else:
-            raise Exception("Key " + key + " not found above")
+        
+        curr = self
+        while hasattr(curr, "parent") and curr.parent is not None:
+            curr = curr.parent
+            if hasattr(curr, key):
+                return eval("curr." + key)
+        
+        raise Exception("Key " + key + " not found above")
         
     def flatten(self):
         toret = [self]

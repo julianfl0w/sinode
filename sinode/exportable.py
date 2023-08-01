@@ -110,6 +110,21 @@ class Exportable:
             markdownString += out["markdown"] + "\n"
             htmlString += out["html"] + "\n"
             
+        elif self.meta["type"] == "wisdom":
+            # print verse number and name
+            verseSuperscript = self.addVerseNo()
+            referenceSuperscript = self.getReferenceSuperscript()
+            htmlString     += verseSuperscript["html"]     + str(self.name) + referenceSuperscript["html"]    
+            markdownString += verseSuperscript["markdown"] + str(self.name) + referenceSuperscript["markdown"]
+            
+            if markdownString[-1] not in [".", "!", ":", ",", ">", "?", "\n"]:
+                htmlString     += ". "
+                markdownString += ". "
+
+            htmlString     += "<br>"
+            markdownString += "\n\n"
+
+
         elif self.meta["type"] == "default":
             # if its height is 0, this is normal text
             if self._height == 0:
@@ -125,6 +140,7 @@ class Exportable:
                 
             # otherwise its a title / heading
             else:
+                markdownString += "\n"
                 markdownString += "#" * (self.depth) + " " + self.name + "\n\n"
                 if self.depth == 0:
                     htmlString += "<title>" + self.name + "</title>\n"
@@ -351,13 +367,13 @@ class Exportable:
         
         return {"html":htmlString, "markdown":markdownString}
 
-    def toTableOfContents(self, minHeight=0):
-            
+    def toTableOfContents(self, minHeight=0, maxDepth=-1):
+        
         markdownString = ""
         htmlString = ""
         
-        #if depth > kwargs["maxDepth"]:
-        #    return {"html":htmlString, "markdown":markdownString}
+        if self.depth > maxDepth and maxDepth >= 0:
+            return {"html":htmlString, "markdown":markdownString}
         
         if self._height < minHeight:
             return {"html":htmlString, "markdown":markdownString}
@@ -368,7 +384,7 @@ class Exportable:
         
         # do children markdown
         for c in self.children:
-            markdownString +=  c.toTableOfContents(minHeight=minHeight)["markdown"]
+            markdownString +=  c.toTableOfContents(minHeight=minHeight, maxDepth=maxDepth)["markdown"]
 
         # make self as item
         htmlString += "<li>\n"
