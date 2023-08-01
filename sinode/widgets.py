@@ -1,21 +1,22 @@
 from . import sinode
 
 import kivy
-#from kivy.uix.floatlayout import FloatLayout
-#from kivy.uix.gridlayout import GridLayout
-#from kivy.uix.textinput import TextInput
-#from kivy.uix.label import Label
-#from kivy.uix.treeview import TreeView
-#from kivy.uix.treeview import TreeViewNode
-#from kivy.uix.treeview import TreeViewLabel
-#from kivy.uix.scrollview import ScrollView
-#from kivy.uix.behaviors import DragBehavior
-#from kivy.uix.widget import Widget
-#from kivy.uix.boxlayout import BoxLayout
-#from kivy.uix.stencilview import StencilView
-#from kivy.uix.slider import Slider
-#from kivy.uix.button import Button
-#from kivy.uix.dropdown import DropDown
+
+# from kivy.uix.floatlayout import FloatLayout
+# from kivy.uix.gridlayout import GridLayout
+# from kivy.uix.textinput import TextInput
+# from kivy.uix.label import Label
+# from kivy.uix.treeview import TreeView
+# from kivy.uix.treeview import TreeViewNode
+# from kivy.uix.treeview import TreeViewLabel
+# from kivy.uix.scrollview import ScrollView
+# from kivy.uix.behaviors import DragBehavior
+# from kivy.uix.widget import Widget
+# from kivy.uix.boxlayout import BoxLayout
+# from kivy.uix.stencilview import StencilView
+# from kivy.uix.slider import Slider
+# from kivy.uix.button import Button
+# from kivy.uix.dropdown import DropDown
 
 from kivy.properties import (
     OptionProperty,
@@ -60,14 +61,18 @@ num2color = [
     Color(0, 0, 0.5, mode="hsv"),  # grey
 ]
 
+
 def color2rgba(c):
     # return [c.r,c.b,c.g,c.a]
     return [c.r, c.b, c.g, 1]
+
 
 num2colorList = [color2rgba(c) for c in num2color]
 
 
 from kivy.uix.gridlayout import GridLayout
+
+
 class GridLayout(kivy.uix.gridlayout.GridLayout, sinode.Sinode):
     def __init__(self, **kwargs):
         sinode.Sinode.__init__(self, **kwargs)
@@ -75,6 +80,8 @@ class GridLayout(kivy.uix.gridlayout.GridLayout, sinode.Sinode):
 
 
 from kivy.uix.slider import Slider
+
+
 class Slider(kivy.uix.slider.Slider, sinode.Leaf):
     def __init__(self, **kwargs):
         sinode.Leaf.__init__(self, parent=self.parent)
@@ -85,40 +92,42 @@ class Slider(kivy.uix.slider.Slider, sinode.Leaf):
         pass
 
     def on_touch_up(self, touch):
-        kivy.uix.slider.Slider.on_touch_up(self,touch)
+        kivy.uix.slider.Slider.on_touch_up(self, touch)
         if touch.grab_current == self:
             self.dispatch("on_release")
             return True
 
+
 from kivy.uix.textinput import TextInput
+
+
 class TextInput(kivy.uix.textinput.TextInput, sinode.Leaf):
     def __init__(self, **kwargs):
         sinode.Leaf.__init__(self)
         kivy.uix.textinput.TextInput.__init__(self, **kwargs)
 
 
-
 class LabeledTextEntry(sinode.Sinode, kivy.uix.gridlayout.GridLayout):
     def __init__(self, **kwargs):
         kivy.uix.gridlayout.GridLayout.__init__(self, **kwargs)
-        
-        #self.attackTimeInput = TextInput(text=".002", multiline=False)
-        #self.attackTimeInput.bind(on_text_validate=on_enter)
-        #self.add_widget(Label(text="Attack Time (s)"))
-        #self.add_widget(self.attackTimeInput)
-        
+
+        # self.attackTimeInput = TextInput(text=".002", multiline=False)
+        # self.attackTimeInput.bind(on_text_validate=on_enter)
+        # self.add_widget(Label(text="Attack Time (s)"))
+        # self.add_widget(self.attackTimeInput)
+
         self.input = TextInput(**kwargs)
         self.input.bind(on_text_validate=on_enter)
         self.label = Label(text=text)
         self.add_widget(self.label)
         self.add_widget(self.input)
-        
-    
+
+
 class LabeledSlider(kivy.uix.gridlayout.GridLayout, sinode.Sinode):
     def __init__(self, **kwargs):
         GridLayout.__init__(self, cols=2)
         sinode.Sinode.__init__(self, parent=self.parent)
-        
+
         self.input = kivy.uix.slider.Slider(**kwargs)
         self.input.bind(on_text_validate=on_enter)
         self.label = Label(text=text)
@@ -127,6 +136,8 @@ class LabeledSlider(kivy.uix.gridlayout.GridLayout, sinode.Sinode):
 
 
 from kivy.uix.label import Label
+
+
 class Label(kivy.uix.label.Label, sinode.Leaf):
     def __init__(self, **kwargs):
         sinode.Leaf.__init__(self, parent=self.parent)
@@ -134,20 +145,26 @@ class Label(kivy.uix.label.Label, sinode.Leaf):
 
 
 from kivy.uix.spinner import Spinner
+
+
 class Spinner(kivy.uix.spinner.Spinner, sinode.Leaf):
     def __init__(self, **kwargs):
         sinode.Leaf.__init__(self, parent=self.parent)
         kivy.uix.spinner.Spinner.__init__(self, **kwargs)
 
+
 from kivy.uix.treeview import TreeViewLabel
+
+
 class TreeViewLabel(sinode.Leaf, kivy.uix.treeview.TreeViewLabel):
     def __init__(self, **kwargs):
         sinode.Sinode.__init__(self, **kwargs)
         kivy.uix.treeview.TreeViewLabel.__init__(self, **kwargs)
 
+
 class TreeView(sinode.Sinode, kivy.uix.treeview.TreeView):
     def __init__(self, **kwargs):
-        #sinode.Sinode.__init__(self, **kwargs)
+        # sinode.Sinode.__init__(self, **kwargs)
         kivy.uix.treeview.TreeView.__init__(self, **kwargs)
 
     def populate(self, indict, parent=None):
@@ -155,7 +172,7 @@ class TreeView(sinode.Sinode, kivy.uix.treeview.TreeView):
         # if the supplied "dictionary" is a SamplePatch, create a button for it
         if type(indict) is not dict:
             newNode = TreeViewButton(text=indict.displayName, size_hint_y=None)
-            self.add_node(node = newNode, parent=parent )
+            self.add_node(node=newNode, parent=parent)
 
             def mf_callback(instance):
                 instance.toAbove("changePatch", {"patch": instance.patch})
@@ -168,13 +185,16 @@ class TreeView(sinode.Sinode, kivy.uix.treeview.TreeView):
         for k, v in indict.items():
             newNode = TreeViewLabel(text=k, is_open=True, size_hint_y=None)
 
-            self.populate(indict = v, parent=newNode) 
+            self.populate(indict=v, parent=newNode)
             if parent is None:
-                self.add_node(node = newNode)
+                self.add_node(node=newNode)
             else:
-                self.add_node(node = newNode, parent=parent)
+                self.add_node(node=newNode, parent=parent)
+
 
 from kivy.uix.scrollview import ScrollView
+
+
 class ScrollView(sinode.Sinode, kivy.uix.scrollview.ScrollView):
     def __init__(self, **kwargs):
         kivy.uix.scrollview.ScrollView.__init__(self, **kwargs)
@@ -182,23 +202,28 @@ class ScrollView(sinode.Sinode, kivy.uix.scrollview.ScrollView):
 
 
 from kivy.uix.button import Button
+
+
 class Button(sinode.Sinode, kivy.uix.button.Button):
     def __init__(self, **kwargs):
         kivy.uix.button.Button.__init__(self, **kwargs)
         sinode.Sinode.__init__(self, **kwargs)
 
-class TreeViewButton(sinode.Sinode, kivy.uix.button.Button, kivy.uix.treeview.TreeViewNode):
+
+class TreeViewButton(
+    sinode.Sinode, kivy.uix.button.Button, kivy.uix.treeview.TreeViewNode
+):
     def __init__(self, **kwargs):
         sinode.Leaf.__init__(self, **kwargs)
         kivy.uix.treeview.TreeViewNode.__init__(self)
         kivy.uix.button.Button.__init__(self)
 
 
-#class DragLabel(DragBehavior, kivy.uix.label.Label, kivy.uix.treeview.TreeViewNode):
+# class DragLabel(DragBehavior, kivy.uix.label.Label, kivy.uix.treeview.TreeViewNode):
 #    pass
 
 # This class is unused. You should use TreeView instead
-#class RecursiveDropdown(DropDown):
+# class RecursiveDropdown(DropDown):
 #    def __init__(self, q, indict, mainButton, jpath=[]):
 #        self.q = q
 #        self.mainButton = mainButton
@@ -240,9 +265,8 @@ class TreeViewButton(sinode.Sinode, kivy.uix.button.Button, kivy.uix.treeview.Tr
 #        # patchDropdown.bind(text=show_selected_value)
 
 
-
 def guiFromDict(indict, parent):
-    
+
     meta = indict["meta"]
     theclass = meta["klass"]
     print(theclass)
@@ -251,8 +275,8 @@ def guiFromDict(indict, parent):
 
     if "callbacks" in meta.keys():
         for k, v in meta["callbacks"].items():
-            exec("node.bind("+k+"=v)")
-    
+            exec("node.bind(" + k + "=v)")
+
     for k, v in indict.items():
         if k == "meta":
             continue
@@ -267,6 +291,7 @@ def guiFromDict(indict, parent):
             node.add_widget(newChild)
 
     return node
+
 
 class Point:
     def __init__(self, coords):
@@ -296,4 +321,3 @@ class Point:
             if abs(p.x - self.x) > abs(closestPoint.x - self.x):
                 closestPoint = p
         return closestPoint
-

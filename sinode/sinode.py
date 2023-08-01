@@ -1,9 +1,11 @@
 import pickle
 import os
 import json
+
 here = os.path.dirname(os.path.abspath(__file__))
 
 from inspect import getframeinfo, stack
+
 
 class Generic(object):
     def __init__(self, **kwargs):
@@ -22,15 +24,16 @@ class Generic(object):
         for key, value in kwargs.items():
             if not hasattr(self, key) or overwrite:
                 exec("self." + key + " = value")
-                
+
         if propagate:
             self.kwargs = kwargs.copy()
             for c in self.children:
                 c.proc_kwargs(**self.kwargs)
 
     def setDefaults(self, **kwargs):
-    	self.proc_kwargs(**kwargs)
-            
+        self.proc_kwargs(**kwargs)
+
+
 def copyDictUnique(indict, modifier):
     outdict = {}
     if type(indict) == dict:
@@ -40,25 +43,26 @@ def copyDictUnique(indict, modifier):
     else:
         return indict + modifier
 
-    
+
 def depthFirstDictMerge(priority, additions):
-    if type(priority) is dict:  
+    if type(priority) is dict:
         retval = priority.copy()
-        for k,v in additions.items():
+        for k, v in additions.items():
             if k in retval.keys():
                 retval[k] = depthFirstDictMerge(retval[k], v)
             else:
                 retval[k] = v
         return retval
-                
+
     elif type(priority) is list:
         return priority + additions
         die
-    
+
     else:
         return priority
 
-#def dict2node(source, parent=None):
+
+# def dict2node(source, parent=None):
 #    retNodes = []
 #    if type(source) == dict:
 #        for k, v in source.items():
@@ -81,15 +85,15 @@ def depthFirstDictMerge(priority, additions):
 #    else:
 #        return Node(name=source)
 
-class Upward(object):
 
+class Upward(object):
     def get(self):
         retdict = {}
         if hasattr(self, "value"):
             retdict["value"] = self.value
         if hasattr(self, "text"):
             retdict["text"] = self.text
-        
+
         if hasattr(self, "name"):
             key = self.name
         else:
@@ -104,8 +108,8 @@ class Upward(object):
 
         return key, retdict
 
-    def toAbove(self, fnName, kwargs = {}):
-        # if this class has the function, 
+    def toAbove(self, fnName, kwargs={}):
+        # if this class has the function,
         # call it on v
         fn = getattr(self, fnName, None)
         if callable(fn):
@@ -113,8 +117,8 @@ class Upward(object):
                 return fn()
             else:
                 return fn(kwargs)
-        
-        #otherwise, try the parent
+
+        # otherwise, try the parent
         else:
             return self.parent.toAbove(fnName, kwargs)
 
@@ -123,7 +127,7 @@ class Upward(object):
         if hasattr(self, varName):
             exec("self." + varName + " = value")
 
-        #otherwise, try the parent
+        # otherwise, try the parent
         else:
             return self.parent.setAbove(varName, value)
 
@@ -131,8 +135,8 @@ class Upward(object):
         if self.parent is None:
             return self
         return self.parent.getApex()
-    
-    #def debug(self, *args):
+
+    # def debug(self, *args):
     #    self.fromAbove("_debug")(*args)
 
     def debug(self, *args):
@@ -147,8 +151,8 @@ class Leaf(Generic, Upward):
     def __init__(self, **kwargs):
         self.proc_kwargs(**kwargs)
 
+
 class Node(Generic, Upward):
-    
     def getByField(self, name, val):
         if hasattr(self, name):
             print(eval("self." + name))
@@ -156,7 +160,7 @@ class Node(Generic, Upward):
                 return self
         elif len(self.children):
             for c in self.children:
-                retval =  c.getByField(name, val)
+                retval = c.getByField(name, val)
                 if retval is not None:
                     return retval
         return None
@@ -167,9 +171,9 @@ class Node(Generic, Upward):
     def sortChildrenByPriority(self):
         for c in self.children:
             c.sortChildrenByPriority()
-        
+
         self.children.sort(key=lambda x: x.meta["priority"], reverse=False)
-    
+
     def __str__(self):
         retstr = str(type(self)) + "\n"
         for child in self.children:
@@ -181,13 +185,13 @@ class Node(Generic, Upward):
         childrenList = {}
         for i, child in enumerate(self.children):
             if isinstance(child, Generic):
-                for childName, child in child.asDict(depth=depth+1).items():
+                for childName, child in child.asDict(depth=depth + 1).items():
                     childrenList[str(i) + ":" + childName] = child
             else:
                 if hasattr(child, "name"):
                     childrenList[str(i) + ":" + child.name] = {}
                 else:
-                    childrenList[str(i) + ":" +str(child)] = {}
+                    childrenList[str(i) + ":" + str(child)] = {}
 
         retDict = {}
         if hasattr(self, "name"):
@@ -195,12 +199,21 @@ class Node(Generic, Upward):
         else:
             retDict[str(type(self))] = childrenList
         return retDict
-    
-    def asFlare(self):
-        if len(self.children) < 1:
-            return []
-        result = {'name': self.name, 'children': [c.asFlare() for c in self.children]}
-        return result
+
+    def asFlare(self, value = 1000.0):
+        retdict = dict(name = self.name, children=[])
+
+        if self._height <= 1:
+            retdict["value"] = value
+            retdict["parent"] = self.parent.name
+            return retdict
+        
+        value = value/sum(["skipFlare" not in c.meta.keys() for c in self.children])
+        for c in self.children:
+            if "skipFlare" not in c.meta.keys():
+                retdict["children"] += [c.asFlare(value)]
+  
+        return retdict
 
     def asNamedDict(self):
         retList = []
@@ -213,7 +226,7 @@ class Node(Generic, Upward):
         retDict = {}
         retDict[self.name] = retList
         return retDict
-    
+
     def getSiblings(self):
         return self.parent.children
 
@@ -246,7 +259,7 @@ class Node(Generic, Upward):
 
     def getDecendentGenerationCount(self):
         return self.getHeight()
-        
+
     def getHeight(self):
         if self.children == []:
             return 0
@@ -282,40 +295,40 @@ class Node(Generic, Upward):
             self._height = 0
         else:
             self._height = 1 + max([c.computeHeight() for c in self.children])
-            
+
         return self._height
-    
+
     def computeHeightNoLists(self):
         if self.children == [] or self.meta["type"] != "default":
             self._height = 0
         else:
             self._height = 1 + max([c.computeHeightNoLists() for c in self.children])
-            
+
         return self._height
-    
+
     def fromAbove(self, key):
         if hasattr(self, key):
             return eval("self." + key)
-        
+
         curr = self
         while hasattr(curr, "parent") and curr.parent is not None:
             curr = curr.parent
             if hasattr(curr, key):
                 return eval("curr." + key)
-        
+
         raise Exception("Key " + key + " not found above")
-        
+
     def flatten(self):
         toret = [self]
         for c in self.children:
             toret += c.flatten()
         return toret
-    
 
     def update(self):
         for c in self.children:
             c.update()
-        
+
+
 def NodeFromFile(filename):
     # open a file, where you ant to store the data
     with open(filename, "rb") as f:
@@ -331,10 +344,11 @@ def NodeFromDict(indict):
         a = pickle.load(f)
     return a
 
+
 class Sinode(Node):
     def __init__(self, **kwargs):
         Node.__init__(self, **kwargs)
-        self.parent = kwargs.get("parent") # enforce single inheritance
+        self.parent = kwargs.get("parent")  # enforce single inheritance
         if not hasattr(self, "index"):
             self.index = 0
         # accumulate path
@@ -347,9 +361,9 @@ class Sinode(Node):
 
         self.apex = self.getApex()
 
-    def toAbove(self, fnName, kwargs = {}):
+    def toAbove(self, fnName, kwargs={}):
         print(self)
-        # if this class has the function, 
+        # if this class has the function,
         # call it on v
         fn = getattr(self, fnName, None)
         if callable(fn):
@@ -357,10 +371,11 @@ class Sinode(Node):
                 return fn()
             else:
                 return fn(kwargs)
-        
-        #otherwise, try the parent
+
+        # otherwise, try the parent
         else:
             return self.parent.toAbove(fnName, kwargs)
+
 
 class Minode(Node):
     def __init__(self, parents):
@@ -373,4 +388,3 @@ class Minode(Node):
         if str(type(self.parent)) == ancestorType:
             return self
         return self.parent.getAncestor(ancestorType)
-
