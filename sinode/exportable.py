@@ -310,19 +310,19 @@ class Exportable:
             dotString += c.asDotNotation(startDepth=c.depth)
         dotString += "}"
 
-        imagename = os.path.join("graphs", self.name.replace(" ", "_") + ".png")
-        
+        imagename = os.path.join(self.getApex().graphsDir, self.name.replace(" ", "_") + ".png")
+        #print(imagename)
         # dont regenerate graphs if indicated
         if hasattr(self.getApex(), "skipGraphs") and self.getApex().skipGraphs:
             pass
         else:
             # write out the dot notation file
-            filename = os.path.join("graphs", self.name.replace(" ", "_") + ".dot")
+            filename = os.path.join(self.getApex().graphsDir, self.name.replace(" ", "_") + ".dot")
             with open(filename, "w+") as f:
                 f.write(dotString)
 
             # convert to image
-            runstring = self.meta["engine"] + " -Tpng '" + filename + "' -o " + "'" + imagename + "'"
+            runstring = f"{self.meta['engine']} -Tpng {filename} -o '{ os.path.join(self.getApex().buildDir, imagename)} '"
             #print(runstring)
             os.system(runstring)
 
@@ -371,7 +371,9 @@ class Exportable:
         
         markdownString = ""
         htmlString = ""
-        
+        if hasattr(self, "tableOfContentsSkip"):
+            return {"html":htmlString, "markdown":markdownString}
+
         if self.depth > maxDepth and maxDepth >= 0:
             return {"html":htmlString, "markdown":markdownString}
         
@@ -395,10 +397,10 @@ class Exportable:
         
         # create a list of children, if applicable
         if len(self.children):
-            htmlString += "<ul>\n"
+            htmlString += "<ol>\n"
             for c in self.children:
-                htmlString += c.toTableOfContents(minHeight=minHeight)["html"]
-            htmlString += "</ul>\n"
+                htmlString += c.toTableOfContents(minHeight=minHeight, maxDepth=maxDepth)["html"]
+            htmlString += "</ol>\n"
 
         # end self as item
         htmlString += "</li>"
