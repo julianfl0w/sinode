@@ -322,8 +322,9 @@ class Exportable:
                 f.write(dotString)
 
             # convert to image
-            runstring = f"{self.meta['engine']} -Tpng {filename} -o '{ os.path.join(self.getApex().buildDir, imagename)} '"
-            #print(runstring)
+            runstring = f"{self.meta['engine']} -Tpng {filename} -o '{ os.path.join(self.getApex().buildDir, imagename)}'"
+            print(runstring)
+            os.makedirs(os.path.join(self.getApex().buildDir, os.path.dirname(imagename)), exist_ok=True)
             os.system(runstring)
 
         # reference it in the markdown
