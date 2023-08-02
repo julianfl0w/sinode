@@ -201,14 +201,16 @@ class Node(Generic, Upward):
         return retDict
 
     def asFlare(self, value = 1000.0):
-        retdict = dict(name = self.name, children=[])
+        retdict = dict(name = self.name, children=[], text = self.toMarkdown()["html"])
 
         if self._height <= 1:
             retdict["value"] = value
             retdict["parent"] = self.parent.name
             return retdict
         
-        value = value/sum(["skipFlare" not in c.meta.keys() for c in self.children])
+        sfSum = sum(["skipFlare" not in c.meta.keys() for c in self.children])
+        
+        value = value/sfSum
         for c in self.children:
             if "skipFlare" not in c.meta.keys():
                 retdict["children"] += [c.asFlare(value)]
