@@ -337,18 +337,17 @@ class Exportable:
         else:
             # write out the dot notation file
             filename = os.path.join(
-                self.getApex().graphsDir, self.name.replace(" ", "_") + ".dot"
+                self.getApex().buildDir, self.getApex().graphsDir, self.name.replace(" ", "_") + ".dot"
             )
+            print(filename)
+            if "build" not in filename:
+                die
             with open(filename, "w+") as f:
                 f.write(dotString)
 
             # convert to image
             runstring = f"{self.meta['engine']} -Tpng {filename} -o '{ os.path.join(self.getApex().buildDir, imagename)}'"
             print(runstring)
-            os.makedirs(
-                os.path.join(self.getApex().buildDir, os.path.dirname(imagename)),
-                exist_ok=True,
-            )
             os.system(runstring)
 
         # reference it in the markdown

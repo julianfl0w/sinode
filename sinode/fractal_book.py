@@ -32,7 +32,6 @@ class FractalBook(sinode.Node, exportable.Exportable):
         # the default meta
         sinode.Node.__init__(self, **kwargs)
 
-        os.makedirs(self.getApex().graphsDir, exist_ok=True)
         # create this key. its just a number. the label will be set later
         self.clusterName = '"cluster_' + str(self.getApex().nodeNumber) + '"'
         self.getApex().nodeNumber += 1
