@@ -133,7 +133,7 @@ class Exportable:
 
         elif self.meta["type"] == "default":
             # if its height is 0, this is normal text
-            if self._height == 0:
+            if self._maxheight == 0:
                 # print verse number and name
                 verseSuperscript = self.addVerseNo()
                 referenceSuperscript = self.getReferenceSuperscript()
@@ -187,13 +187,13 @@ class Exportable:
                 htmlString += childMark["html"]
 
             # add a new line between paragraphs
-            if self._height > 0:
+            if self._maxheight > 0:
                 # double newline after
                 markdownString += "\n\n"
                 htmlString += "\n"
 
             # if its height is 1, add paragraph end
-            if self._height != 0:
+            if self._maxheight != 0:
                 htmlString += "</p>"
                 # markdownString += (
                 #    "</p>"
@@ -358,7 +358,7 @@ class Exportable:
         )
 
         # and HTML
-        htmlString = self.name + "<br>" + '<img src="' + imagename + '" width="100%">\n'
+        htmlString = "<br>" + '<figure><img src="' + imagename + f'" width="100%"><figcaption>{self.name}</figcaption></figure>\n'
 
         return {"html": htmlString, "markdown": markdownString}
 
@@ -403,7 +403,7 @@ class Exportable:
         if self.depth > maxDepth and maxDepth >= 0:
             return {"html": htmlString, "markdown": markdownString}
 
-        if self._height < minHeight:
+        if self._maxheight < minHeight:
             return {"html": htmlString, "markdown": markdownString}
 
         markdownString += "  " * self.depth

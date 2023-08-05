@@ -13,8 +13,11 @@ class Generic(object):
             self.children = []
         self.proc_kwargs(**kwargs)
         if hasattr(self, "parent"):
-            if self.parent is not None and self not in self.parent.children:
-                self.parent.children += [self]
+            if self.parent is not None:
+                self.index = len(self.getSiblings())
+                if self not in self.parent.children:
+                    self.parent.children += [self]
+            
 
     def proc_kwargs(self, **kwargs):
         overwrite = kwargs.get("overwrite") == True
@@ -200,10 +203,10 @@ class Node(Generic, Upward):
             retDict[str(type(self))] = childrenList
         return retDict
 
-    def asFlare(self, value = 1000.0):
-        retdict = dict(name = self.name, children=[], text = self.toMarkdown()["html"])
+    def asFlare(self, index=0, value = 1000.0):
+        retdict = dict(name = self.name, children=[], text = self.toMarkdown()["html"], indexedName = f"{index}\n\n{self.name}")
 
-        if self._height <= 1:
+        if self._maxheight <= 1:
             retdict["value"] = value
             retdict["parent"] = self.parent.name
             return retdict
@@ -211,9 +214,11 @@ class Node(Generic, Upward):
         sfSum = sum(["skipFlare" not in c.meta.keys() for c in self.children])
         
         value = value/sfSum
+        index = 0
         for c in self.children:
             if "skipFlare" not in c.meta.keys():
-                retdict["children"] += [c.asFlare(value)]
+                retdict["children"] += [c.asFlare(index=index, value=value)]
+                index +=1 
   
         return retdict
 
@@ -294,19 +299,22 @@ class Node(Generic, Upward):
 
     def computeHeight(self):
         if not len(self.children):
-            self._height = 0
+            self._maxheight = 0
         else:
-            self._height = 1 + max([c.computeHeight() for c in self.children])
+            self._maxheight = 1 + max([c.computeHeight() for c in self.children])
+            self._minheight = 1 + min([c.computeHeight() for c in self.children])
 
-        return self._height
+        return self._maxheight
 
     def computeHeightNoLists(self):
         if self.children == [] or self.meta["type"] != "default":
-            self._height = 0
+            self._maxheight = 0
+            self._minheight = 0
         else:
-            self._height = 1 + max([c.computeHeightNoLists() for c in self.children])
+            self._maxheight = 1 + max([c.computeHeightNoLists() for c in self.children])
+            self._minheight = 1 + min([c.computeHeightNoLists() for c in self.children])
 
-        return self._height
+        return self._maxheight
 
     def fromAbove(self, key):
         if hasattr(self, key):
