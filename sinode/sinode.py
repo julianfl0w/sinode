@@ -347,12 +347,15 @@ def NodeFromFile(filename):
     return a
 
 
-def NodeFromDict(indict):
-    # open a file, where you ant to store the data
-    with open(filename, "rb") as f:
-        # dump information to that file
-        a = pickle.load(f)
-    return a
+def NodeFromDict(name, indict, parent=None):
+    if type(indict) is dict:
+        thisNode = Sinode(name=name, parent=parent)
+        for k, v in indict.items():
+            thisNode.children += [NodeFromDict(name=k,indict=v, parent=thisNode)]
+    else:
+        thisNode = Sinode(name=name, parent=parent)
+
+    return thisNode
 
 
 class Sinode(Node):

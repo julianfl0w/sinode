@@ -108,9 +108,9 @@ class FractalBook(sinode.Node, exportable.Exportable):
         if self.parent is None:
             self.sortChildrenByPriority()
 
-        if self.parent is None and self.name != "Book Of Julian":
-            print(self.name)
-            die 
+        #if self.parent is None and self.name != "Book Of Julian":
+        #    print(self.name)
+        #    die 
 
     def processText(self):
         # if its a list, add all elements as children
@@ -161,3 +161,15 @@ if __name__ == "__main__":
 
     # os.system("mdpdf -o README.pdf README_formatted.md")
     os.system("pandoc --pdf-engine=xelatex README_formatted.md -s -o README.pdf")
+
+
+def fromDict(name, indict, parent=None):
+    if type(indict) is dict:
+        thisNode = FractalBook(name=name, parent=parent, origin="text")
+        for k, v in indict.items():
+            thisNode.children += [fromDict(name=k,indict=v, parent=thisNode)]
+    else:
+        thisNode = FractalBook(name=name, parent=parent, origin="text")
+
+    return thisNode
+

@@ -4,7 +4,6 @@ import json
 
 here = os.path.dirname(os.path.abspath(__file__))
 
-
 class Exportable:
     def toMarkdown(self, **kwargs):
 
@@ -438,3 +437,14 @@ class Exportable:
         htmlString += "</li>"
 
         return {"html": htmlString, "markdown": markdownString}
+
+def fromDict(name, indict, parent=None):
+    if type(indict) is dict:
+        thisNode = Exportable(name=name, parent=parent)
+        for k, v in indict.items():
+            thisNode.children += [fromDict(name=k,indict=v, parent=thisNode)]
+    else:
+        thisNode = Exportable(name=name, parent=parent)
+
+    return thisNode
+
