@@ -1,1 +1,1 @@
-from sinode import *
+from . import sinode
