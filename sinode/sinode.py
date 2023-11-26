@@ -189,6 +189,26 @@ class Node(Generic, Upward):
         for i, child in enumerate(self.children):
             if isinstance(child, Generic):
                 for childName, child in child.asDict(depth=depth + 1).items():
+                    childrenList[childName] = child
+            else:
+                if hasattr(child, "name"):
+                    childrenList[child.name] = {}
+                else:
+                    childrenList[str(child)] = {}
+
+        retDict = {}
+        if hasattr(self, "name"):
+            retDict[self.name] = childrenList
+        else:
+            retDict[str(type(self))] = childrenList
+        return retDict
+
+
+    def asDictNumbered(self, depth=0):
+        childrenList = {}
+        for i, child in enumerate(self.children):
+            if isinstance(child, Generic):
+                for childName, child in child.asDict(depth=depth + 1).items():
                     childrenList[str(i) + ":" + childName] = child
             else:
                 if hasattr(child, "name"):
@@ -202,6 +222,7 @@ class Node(Generic, Upward):
         else:
             retDict[str(type(self))] = childrenList
         return retDict
+
 
     def asFlare(self, index=0, value = 1000.0):
         retdict = dict(name = self.name, children=[], text = self.toMarkdown()["html"], indexedName = f"{index}\n\n{self.name}")
