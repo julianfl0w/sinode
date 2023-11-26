@@ -1,6 +1,7 @@
 import pickle
 import os
 import json
+import re
 
 here = os.path.dirname(os.path.abspath(__file__))
 
@@ -409,6 +410,14 @@ class Sinode(Node):
         # otherwise, try the parent
         else:
             return self.parent.toAbove(fnName, kwargs)
+        
+    def children2obj(self):
+        for c in self.children:
+            c.children2obj()
+            # remove leading letters
+            newName = re.sub(r'[^a-zA-Z]', '', c.name)
+            command = f"self.{newName} = c"
+            exec(command)
 
 
 class Minode(Node):

@@ -22,7 +22,7 @@ def toPDF(intext, basedir=here, ext="html"):
     os.system("pandoc --pdf-engine=xelatex " + formattedFilename + " -s -o README.pdf")
 
 
-class FractalBook(sinode.Node, exportable.Exportable):
+class FractalBook(sinode.Sinode, exportable.Exportable):
     def __init__(self, **kwargs):
         # defaults
         self.nodeNumber = 0
@@ -30,7 +30,7 @@ class FractalBook(sinode.Node, exportable.Exportable):
         self.referenceNo = 0
 
         # the default meta
-        sinode.Node.__init__(self, **kwargs)
+        sinode.Sinode.__init__(self, **kwargs)
 
         # create this key. its just a number. the label will be set later
         self.clusterName = '"cluster_' + str(self.getApex().nodeNumber) + '"'

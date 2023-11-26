@@ -7,16 +7,17 @@ here = os.path.dirname(os.path.abspath(__file__))
 class Exportable:
     def toMarkdown(self, **kwargs):
 
-        print(self.name)
+        #print(self.name)
 
         # for k, v in kwargs.items():
         #    exec("self." + k + " = v")
 
         markdownString = ""
         htmlString = ""
+        textString = ""
 
         if self.meta["ignore"]:
-            return {"html": htmlString, "markdown": markdownString}
+            return {"html": htmlString, "markdown": markdownString, "text":textString}
 
         if self.depth == 0:
             htmlString += "<html>\n"
@@ -71,9 +72,10 @@ class Exportable:
             # put the list title
             if self.name != "Prompt":
                 verseSuperscript = self.addVerseNo()
-                print(self.name)
+                #print(self.name)
                 htmlString += verseSuperscript["html"] + self.name + "\n"
                 markdownString += verseSuperscript["markdown"] + self.name + "\n"
+                textString += self.name + "\n"
                 if self.meta["topology"] != "flat":
                     htmlString += "<ol>"
             else:
@@ -136,6 +138,7 @@ class Exportable:
                 # print verse number and name
                 verseSuperscript = self.addVerseNo()
                 referenceSuperscript = self.getReferenceSuperscript()
+                textString += self.name
                 htmlString += (
                     verseSuperscript["html"]
                     + str(self.name)
@@ -209,7 +212,7 @@ class Exportable:
             htmlString += "</body>\n"
             htmlString += "</html>\n"
 
-        return {"html": htmlString, "markdown": markdownString}
+        return {"html": htmlString, "markdown": markdownString, "text":textString}
 
     def addVerseNo(self):
         markdownString = ""
