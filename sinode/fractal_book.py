@@ -24,14 +24,58 @@ def toPDF(intext, basedir=here, ext="html"):
 
 class FractalBook(sinode.Sinode, exportable.Exportable):
     def __init__(self, **kwargs):
-        # defaults
-        self.nodeNumber = 0
-        self.verseNo = 0
-        self.referenceNo = 0
 
         # the default meta
         sinode.Sinode.__init__(self, **kwargs)
-
+        # defaults
+        self.setDefaults(
+            lineColor = '"#88ffff"'
+        )
+        self.setDefaults(
+            nodeNumber=0,
+            verseNo=0,
+            referenceNo=0,
+            meta={
+                "priority": 1000,
+                "ignore": False,
+                "type": "default",
+                "topology": "nested",
+                "noPropagate": {},
+                "font": {"color": "white"},
+                "relationship": "descends",
+                "engine": "dot",
+                "graphParams": {
+                    "rankdir": "TB",
+                    "style": "filled",
+                    "fontcolor": "black",
+                    "color": "black",
+                    # "color": "\"#262626\"",
+                    "bgcolor": "white",
+                    # "fillcolor": "\"darkgray:gold\"",
+                    "gradientangle": 0,
+                    "dpi": 300,
+                },
+                "boxParams": {
+                    "rankdir": "TB",
+                    "shape": "box",
+                    "penwidth": 1,
+                    "color": self.lineColor,
+                    "fontcolor": "black",
+                    # "fillcolor": "\"darkorchid4:grey10\"",
+                    "fillcolor": "white",
+                    "style": "filled",
+                    "gradientangle": 270.05,
+                },
+                "arrowParams": {"color": self.lineColor, "penwidth": 1},
+            },
+            origin="directory",
+            buildDir="build",
+            graphsDir="graphs",
+            depth=1,
+            parent=None,
+            skipGraphs=False,
+            displayVerseNo=True,
+        )
         # create this key. its just a number. the label will be set later
         self.clusterName = '"cluster_' + str(self.getApex().nodeNumber) + '"'
         self.getApex().nodeNumber += 1
@@ -47,7 +91,6 @@ class FractalBook(sinode.Sinode, exportable.Exportable):
 
         # Process a directory
         if self.origin == "directory":
-
             self.name = self.source.split(os.sep)[-1]
 
             # iterate over files
@@ -108,9 +151,9 @@ class FractalBook(sinode.Sinode, exportable.Exportable):
         if self.parent is None:
             self.sortChildrenByPriority()
 
-        #if self.parent is None and self.name != "Book Of Julian":
+        # if self.parent is None and self.name != "Book Of Julian":
         #    print(self.name)
-        #    die 
+        #    die
 
     def processText(self):
         # if its a list, add all elements as children
@@ -167,9 +210,8 @@ def fromDict(name, indict, parent=None):
     if type(indict) is dict:
         thisNode = FractalBook(name=name, parent=parent, origin="text")
         for k, v in indict.items():
-            thisNode.children += [fromDict(name=k,indict=v, parent=thisNode)]
+            thisNode.children += [fromDict(name=k, indict=v, parent=thisNode)]
     else:
         thisNode = FractalBook(name=name, parent=parent, origin="text")
 
     return thisNode
-

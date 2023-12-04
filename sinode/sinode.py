@@ -18,7 +18,6 @@ class Generic(object):
                 self.index = len(self.getSiblings())
                 if self not in self.parent.children:
                     self.parent.children += [self]
-            
 
     def proc_kwargs(self, **kwargs):
         overwrite = kwargs.get("overwrite") == True
@@ -224,24 +223,28 @@ class Node(Generic, Upward):
             retDict[str(type(self))] = childrenList
         return retDict
 
-
-    def asFlare(self, index=0, value = 1000.0):
-        retdict = dict(name = self.name, children=[], text = self.toMarkdown()["html"], indexedName = f"{index}\n\n{self.name}")
+    def asFlare(self, index=0, value=1000.0):
+        retdict = dict(
+            name=self.name,
+            children=[],
+            text=self.toMarkdown()["html"],
+            indexedName=f"{index}\n\n{self.name}",
+        )
 
         if self._maxheight <= 1:
             retdict["value"] = value
             retdict["parent"] = self.parent.name
             return retdict
-        
+
         sfSum = sum(["skipFlare" not in c.meta.keys() for c in self.children])
-        
-        value = value/sfSum
+
+        value = value / sfSum
         index = 0
         for c in self.children:
             if "skipFlare" not in c.meta.keys():
                 retdict["children"] += [c.asFlare(index=index, value=value)]
-                index +=1 
-  
+                index += 1
+
         return retdict
 
     def asNamedDict(self):
@@ -373,7 +376,7 @@ def NodeFromDict(name, indict, parent=None):
     if type(indict) is dict:
         thisNode = Sinode(name=name, parent=parent)
         for k, v in indict.items():
-            thisNode.children += [NodeFromDict(name=k,indict=v, parent=thisNode)]
+            thisNode.children += [NodeFromDict(name=k, indict=v, parent=thisNode)]
     else:
         thisNode = Sinode(name=name, parent=parent)
 
@@ -415,7 +418,8 @@ class Sinode(Node):
         for c in self.children:
             c.children2obj()
             # remove leading letters
-            newName = re.sub(r'[^a-zA-Z]', '', c.name)
+            newName = re.sub(r'[^a-zA-Z]', '_', c.name)
+            print(newName)
             command = f"self.{newName} = c"
             exec(command)
 

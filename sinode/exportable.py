@@ -4,7 +4,38 @@ import json
 
 here = os.path.dirname(os.path.abspath(__file__))
 
+
 class Exportable:
+
+    def preformatListRecurse(self, depth=0):
+        textString = ""
+        if not len(self.children):
+            return self.name
+        
+        for i, c in enumerate(self.children):
+            textString += c.preformatListRecurse(depth=depth+1)
+            if i < len(self.children)-1:
+                textString += ", " # includes oxford comma
+
+        return textString
+
+    def listRecurse(self, relationship = "contains", depth=0):
+        textString = ""
+        if not len(self.children):
+            return self.name
+
+        if depth > 0:
+            textString += f"{self.name}, which {relationship}"
+        else:
+            textString += f"{self.name}, {relationship} "
+        for i, c in enumerate(self.children):
+            if i == len(self.children) and "and" not in self.name.lower():
+                textString += ", and "
+            textString += c.listRecurse(relationship=relationship, depth=depth+1)
+            textString += "\n" # includes oxford comma
+
+        return textString
+
     def toMarkdown(self, **kwargs):
 
         #print(self.name)
@@ -67,6 +98,9 @@ class Exportable:
             gv = self.toGraphViz(params=self.meta)
             markdownString += gv["markdown"]
             htmlString += gv["html"]
+            textString += f"Here is our {self.name}. "
+            for c in self.children:
+                textString += c.listRecurse(depth=0)
 
         elif self.meta["type"] == "list":
             # put the list title
@@ -101,6 +135,8 @@ class Exportable:
             referenceSuperscript = self.getReferenceSuperscript()
             htmlString += referenceSuperscript["html"]
             markdownString += referenceSuperscript["markdown"]
+
+            textString += self.preformatListRecurse()
 
             # double newline after
             markdownString += "\n\n"
@@ -138,7 +174,7 @@ class Exportable:
                 # print verse number and name
                 verseSuperscript = self.addVerseNo()
                 referenceSuperscript = self.getReferenceSuperscript()
-                textString += self.name
+                textString += self.name.replace("<br>", '')
                 htmlString += (
                     verseSuperscript["html"]
                     + str(self.name)
@@ -329,26 +365,32 @@ class Exportable:
             dotString += c.asDotNotation(startDepth=c.depth)
         dotString += "}"
 
-        imagename = os.path.join(
+        self.imageName = os.path.join(
             self.getApex().graphsDir, self.name.replace(" ", "_") + ".png"
         )
-        # print(imagename)
+        # print(self.imageName)
         # dont regenerate graphs if indicated
         if hasattr(self.getApex(), "skipGraphs") and self.getApex().skipGraphs:
             pass
         else:
+            buildGraphDir = os.path.join(
+                self.getApex().buildDir,
+                self.getApex().graphsDir)
+            os.makedirs(buildGraphDir, exist_ok=True)
             # write out the dot notation file
-            filename = os.path.join(
-                self.getApex().buildDir, self.getApex().graphsDir, self.name.replace(" ", "_") + ".dot"
+            dotFilename = os.path.join(
+                buildGraphDir,
+                self.name.replace(" ", "_") + ".dot",
             )
-            print(filename)
-            if "build" not in filename:
+            print(dotFilename)
+            if "build" not in dotFilename:
                 die
-            with open(filename, "w+") as f:
+            with open(dotFilename, "w+") as f:
                 f.write(dotString)
 
+            self.buildImageName = os.path.join(self.getApex().buildDir, self.imageName)
             # convert to image
-            runstring = f"{self.meta['engine']} -Tpng {filename} -o '{ os.path.join(self.getApex().buildDir, imagename)}'"
+            runstring = f"{self.meta['engine']} -Tpng {dotFilename} -o '{self.buildImageName}'"
             print(runstring)
             os.system(runstring)
 
@@ -356,11 +398,16 @@ class Exportable:
         markdownString = (
             self.name
             + "\n"
-            + ("\n![" + self.name + "](/" + imagename + "?raw=true)\n\n")
+            + ("\n![" + self.name + "](/" + self.imageName + "?raw=true)\n\n")
         )
 
         # and HTML
-        htmlString = "<br>" + '<figure><img src="' + imagename + f'" width="100%"><figcaption>{self.name}</figcaption></figure>\n'
+        htmlString = (
+            "<br>"
+            + '<figure><img src="'
+            + self.imageName
+            + f'" width="100%"><figcaption>{self.name}</figcaption></figure>\n'
+        )
 
         return {"html": htmlString, "markdown": markdownString}
 
@@ -441,13 +488,13 @@ class Exportable:
 
         return {"html": htmlString, "markdown": markdownString}
 
+
 def fromDict(name, indict, parent=None):
     if type(indict) is dict:
         thisNode = Exportable(name=name, parent=parent)
         for k, v in indict.items():
-            thisNode.children += [fromDict(name=k,indict=v, parent=thisNode)]
+            thisNode.children += [fromDict(name=k, indict=v, parent=thisNode)]
     else:
         thisNode = Exportable(name=name, parent=parent)
 
     return thisNode
-
