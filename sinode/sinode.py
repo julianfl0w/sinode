@@ -139,11 +139,11 @@ class Upward(object):
             return self
         return self.parent.getApex()
 
-    # def debug(self, *args):
+    #def debug(self, *args):
     #    self.fromAbove("_debug")(*args)
 
     def debug(self, *args):
-        if not (hasattr(self, "DEBUG") and self.DEBUG):
+        if hasattr(self.getApex(), "DEBUG") and self.getApex().DEBUG:
             caller = getframeinfo(stack()[1][0])
             print(
                 "%s:%d - %s" % (os.path.basename(caller.filename), caller.lineno, args)
@@ -351,7 +351,7 @@ class Node(Generic, Upward):
             if hasattr(curr, key):
                 return eval("curr." + key)
 
-        raise Exception("Key " + key + " not found above")
+        raise Exception(f"Key {key} not found above")
 
     def flatten(self):
         toret = [self]

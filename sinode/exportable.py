@@ -102,19 +102,31 @@ class Exportable:
             for c in self.children:
                 textString += c.listRecurse(depth=0)
 
+        elif self.meta["type"] == "prompt":
+            htmlString += "<i>"
+            htmlString += '<ol style="list-style: none;padding-left: 0;">'
+
+            referenceSuperscript = self.getReferenceSuperscript()
+            htmlString += referenceSuperscript["html"]
+            markdownString += referenceSuperscript["markdown"]
+
+            textString += self.preformatListRecurse()
+            htmlString += "</i>"
+
+
+            # double newline after
+            markdownString += "\n\n"
+            htmlString += "\n\n"
+
         elif self.meta["type"] == "list":
             # put the list title
-            if self.name != "Prompt":
-                verseSuperscript = self.addVerseNo()
-                #print(self.name)
-                htmlString += verseSuperscript["html"] + self.name + "\n"
-                markdownString += verseSuperscript["markdown"] + self.name + "\n"
-                textString += self.name + "\n"
-                if self.meta["topology"] != "flat":
-                    htmlString += "<ol>"
-            else:
-                htmlString += "<i>"
-                htmlString += '<ol style="list-style: none;padding-left: 0;">'
+            verseSuperscript = self.addVerseNo()
+            #print(self.name)
+            htmlString += verseSuperscript["html"] + self.name + "\n"
+            markdownString += verseSuperscript["markdown"] + self.name + "\n"
+            textString += self.name + "\n"
+            if self.meta["topology"] != "flat":
+                htmlString += "<ol>"
 
             # start listing
             if self.meta["topology"] == "flat":
@@ -128,9 +140,6 @@ class Exportable:
                     markdownString += child.toList(depth=0)["markdown"]
                     htmlString += child.toList(depth=0)["html"]
                 htmlString += "</ol>"
-
-            if self.name == "Prompt":
-                htmlString += "</i>"
 
             referenceSuperscript = self.getReferenceSuperscript()
             htmlString += referenceSuperscript["html"]
