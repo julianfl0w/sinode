@@ -278,7 +278,7 @@ class Exportable:
         if "reference" in self.meta.keys():
             for reference in self.meta["reference"]:
                 referenceNo = self.getApex().referenceNo
-                referenceLetter = chr(referenceNo + 97)
+                referenceLetter = f"{referenceNo}"
                 self.getApex().referenceNo += 1
                 markdownString += (
                     "<sup>[" + referenceLetter + "](" + reference + ")</sup> "
