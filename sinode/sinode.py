@@ -229,6 +229,7 @@ class Node(Generic, Upward):
             children=[],
             text=self.toMarkdown()["html"],
             indexedName=f"{index}\n\n{self.name}",
+            meta=self.meta
         )
 
         if self._maxheight <= 1:
