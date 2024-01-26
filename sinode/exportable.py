@@ -37,8 +37,7 @@ class Exportable:
         return textString
 
     def toMarkdown(self, **kwargs):
-
-        #print(self.name)
+        # print(self.name)
 
         # for k, v in kwargs.items():
         #    exec("self." + k + " = v")
@@ -48,7 +47,7 @@ class Exportable:
         textString = ""
 
         if self.meta["ignore"]:
-            return {"html": htmlString, "markdown": markdownString, "text":textString}
+            return {"html": htmlString, "markdown": markdownString, "text": textString}
 
         if self.depth == 0:
             htmlString += "<html>\n"
@@ -79,7 +78,7 @@ class Exportable:
         </head>
     """
             htmlString += (
-                '<body style="color:' + kwargs["textColor"] + ';align:justify">\n'
+                f'<body style="color: {kwargs["textColor"]} ;align:{self.fromAbove("align")}">\n'
             )
 
         # if "font" in self.meta.keys():
@@ -222,7 +221,7 @@ class Exportable:
                 # htmlString     += "\n<hr>"
 
                 # add paragraph tag
-                htmlString += '<p align="justify">'
+                htmlString += f'<p align="{self.getApex().align}">'
                 # markdownString += (
                 #    "<p align=\"justify\">"
                 # )
@@ -257,7 +256,7 @@ class Exportable:
             htmlString += "</body>\n"
             htmlString += "</html>\n"
 
-        return {"html": htmlString, "markdown": markdownString, "text":textString}
+        return {"html": htmlString, "markdown": markdownString, "text": textString}
 
     def addVerseNo(self):
         markdownString = ""
@@ -452,7 +451,6 @@ class Exportable:
         return {"html": htmlString, "markdown": markdownString}
 
     def toTableOfContents(self, minHeight=0, maxDepth=-1):
-
         markdownString = ""
         htmlString = ""
         if "tableOfContentsSkip" in self.meta.keys():
