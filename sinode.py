@@ -6,9 +6,9 @@ import re
 here = os.path.dirname(os.path.abspath(__file__))
 
 from inspect import getframeinfo, stack
+from . import exportable
 
-
-class Generic(object):
+class Generic(exportable.Exportable):
     def __init__(self, **kwargs):
         if not hasattr(self, "children"):
             self.children = []
@@ -224,6 +224,7 @@ class Node(Generic, Upward):
         return retDict
 
     def asFlare(self, index=0, value=1000.0):
+        print(self.name)
         retdict = dict(
             name=self.name,
             children=[],
@@ -234,7 +235,9 @@ class Node(Generic, Upward):
 
         if self._maxheight <= 1:
             retdict["value"] = value
-            retdict["parent"] = self.parent.name
+            if self.parent is not None:
+                retdict["parent"] = self.parent.name
+
             return retdict
 
         sfSum = sum(["skipFlare" not in c.meta.keys() for c in self.children])
@@ -373,14 +376,14 @@ def NodeFromFile(filename):
     return a
 
 
-def NodeFromDict(name, indict, parent=None):
+def fromDict(name, indict, parent=None, depth=0):
     if type(indict) is dict:
-        thisNode = Sinode(name=name, parent=parent)
+        thisNode = Sinode(name=name, parent=parent, depth=depth+1, meta={"type":"default"})
         for k, v in indict.items():
-            thisNode.children += [NodeFromDict(name=k, indict=v, parent=thisNode)]
+            thisNode.children += [fromDict(name=k, indict=v, parent=thisNode, depth=depth+1)]
     else:
-        thisNode = Sinode(name=name, parent=parent)
-
+        thisNode = Sinode(name=name, parent=parent, depth=depth+1, meta={"type":"default"})
+    thisNode.depth= depth
     return thisNode
 
 

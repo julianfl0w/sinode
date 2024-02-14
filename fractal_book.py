@@ -208,10 +208,10 @@ if __name__ == "__main__":
 
 def fromDict(name, indict, parent=None):
     if type(indict) is dict:
-        thisNode = FractalBook(name=name, parent=parent, origin="text")
+        thisNode = FractalBook(name=name, parent=parent, origin="text", source="text")
         for k, v in indict.items():
             thisNode.children += [fromDict(name=k, indict=v, parent=thisNode)]
     else:
-        thisNode = FractalBook(name=name, parent=parent, origin="text")
+        thisNode = FractalBook(name=name, parent=parent, origin="text", source="text")
 
     return thisNode

@@ -9,7 +9,7 @@ setup(
     author="Julian Loiacono",
     author_email="jcloiacon@gmail.com",
     url="https://github.com/julianfl0w/sinode",
-    packages=find_packages(),
+    packages=['.'],
     package_data={
         # everything
         "": ["*"]

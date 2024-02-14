@@ -46,9 +46,10 @@ class Exportable:
         htmlString = ""
         textString = ""
 
-        if self.meta["ignore"]:
-            return {"html": htmlString, "markdown": markdownString, "text": textString}
-
+        if hasattr(self, "meta") and "ignore" in self.meta:
+            if self.meta["ignore"]:
+                return {"html": htmlString, "markdown": markdownString, "text": textString}
+            
         if self.depth == 0:
             htmlString += "<html>\n"
             htmlString += """
@@ -78,7 +79,7 @@ class Exportable:
         </head>
     """
             htmlString += (
-                f'<body style="color: {kwargs["textColor"]} ;align:{self.fromAbove("align")}">\n'
+                f'<body style="color: {self.fromAbove("textColor")} ;align:{self.fromAbove("align")}">\n'
             )
 
         # if "font" in self.meta.keys():
