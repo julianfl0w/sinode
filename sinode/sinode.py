@@ -3,10 +3,6 @@ import os
 import json
 import re
 
-import numpy as np
-import base64
-from io import BytesIO
-
 here = os.path.dirname(os.path.abspath(__file__))
 
 from inspect import getframeinfo, stack
@@ -187,12 +183,6 @@ class Upward(object):
 class Leaf(Generic, Upward):
     def __init__(self, **kwargs):
         self.proc_kwargs(**kwargs)
-
-
-def numpy_array_to_base64(numpy_array):
-    with BytesIO() as buffer:
-        np.save(buffer, numpy_array)
-        return base64.b64encode(buffer.getvalue()).decode('utf-8')
 
 
 class Node(Generic, Upward):
