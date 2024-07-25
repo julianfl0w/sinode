@@ -87,7 +87,7 @@ def toJsonDict(self):
             attributes_dict[k] = toJsonDict(v)
         return attributes_dict
     
-    elif isinstance(self, np.ndarray):
+    elif False and isinstance(self, np.ndarray):
         if attr_value.ndim == 1:
             return numpy_array_to_base64(attr_value)
         elif attr_value.ndim == 2:
@@ -410,6 +410,17 @@ class Node(Generic, Upward):
         for c in self.children:
             c.update()
 
+    def getKeys(self, keyname):
+        retlist = []
+        print(dir(self))
+        print(self.children)
+        for c in self.children:
+            retlist += c.getKeys(keyname)
+        print(self.name)
+        if self.name == keyname:
+            retlist += [self]
+        return retlist
+
 
 def NodeFromFile(filename):
     # open a file, where you ant to store the data
@@ -424,8 +435,11 @@ def fromDict(name, indict, parent=None, depth=0):
         thisNode = Sinode(name=name, parent=parent, depth=depth+1, meta={"type":"default"})
         for k, v in indict.items():
             thisNode.children += [fromDict(name=k, indict=v, parent=thisNode, depth=depth+1)]
-    else:
+    elif type(indict) is list:
         thisNode = Sinode(name=name, parent=parent, depth=depth+1, meta={"type":"default"})
+        thisNode.children = [fromDict(name=str(i), indict=v, parent=thisNode, depth=depth+1) for i, v in enumerate(indict)]
+    else:
+        thisNode = Sinode(name=name, parent=parent, depth=depth+1, meta={"type":"default"}, data=indict)
     thisNode.depth= depth
     return thisNode
 
