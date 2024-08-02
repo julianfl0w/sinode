@@ -87,11 +87,12 @@ def toJsonDict(self):
             attributes_dict[k] = toJsonDict(v)
         return attributes_dict
     
-    elif False and isinstance(self, np.ndarray):
-        if attr_value.ndim == 1:
-            return numpy_array_to_base64(attr_value)
-        elif attr_value.ndim == 2:
-            return [numpy_array_to_base64(attr_value[i, :]) for i in range(attr_value.shape[0])]
+    elif str(type(self))== "<class 'numpy.ndarray'>":
+        from . import mathnode
+        if self.ndim == 1:
+            return mathnode.numpy_array_to_base64(self)
+        elif self.ndim == 2:
+            return [mathnode.numpy_array_to_base64(self[i, :]) for i in range(self.shape[0])]
 
     return self
 
@@ -431,18 +432,33 @@ def NodeFromFile(filename):
 
 
 def fromDict(name, indict, parent=None, depth=0):
+    print(" "*depth + name)
     if type(indict) is dict:
         thisNode = Sinode(name=name, parent=parent, depth=depth+1, meta={"type":"default"})
         for k, v in indict.items():
             thisNode.children += [fromDict(name=k, indict=v, parent=thisNode, depth=depth+1)]
     elif type(indict) is list:
         thisNode = Sinode(name=name, parent=parent, depth=depth+1, meta={"type":"default"})
+        print(indict)
+        die
         thisNode.children = [fromDict(name=str(i), indict=v, parent=thisNode, depth=depth+1) for i, v in enumerate(indict)]
     else:
         thisNode = Sinode(name=name, parent=parent, depth=depth+1, meta={"type":"default"}, data=indict)
     thisNode.depth= depth
     return thisNode
 
+
+def printdict(name, inval, depth=0):
+    print(" "*depth + name)
+    depth +=1
+    if type(inval) is dict:
+        for k, v in inval.items():
+            printdict(k, v, depth)
+    elif type(inval) is list:
+        for i, item in enumerate(inval):
+            printdict(str(i), item, depth)
+    else:
+        print(" "*depth + str(inval) + str(type(inval)))
 
 class Sinode(Node):
     def __init__(self, **kwargs):
