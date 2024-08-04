@@ -26,7 +26,9 @@ class Generic(exportable.Exportable):
             die
         for key, value in kwargs.items():
             if not hasattr(self, key) or overwrite:
-                exec("self." + key + " = value")
+                if key[0] in ["0","1","2","3","4","5","6","7","8","9"]:
+                    key = "_" + key
+                exec(f"self.{key} = value")
 
         if propagate:
             self.kwargs = kwargs.copy()
@@ -185,6 +187,34 @@ class Leaf(Generic, Upward):
     def __init__(self, **kwargs):
         self.proc_kwargs(**kwargs)
 
+import sys
+def demunch(node):
+    sys.setrecursionlimit(60)
+    if isinstance(node, Generic):
+        user_attributes = {key: value for key, value in node.__dict__.items() if not key.startswith('__')}
+        for k, v in user_attributes.items():
+            if k in ["parent", "children"]:
+                continue
+            print(k)
+            user_attributes[k] = demunch(v)
+        return user_attributes
+    elif type(node) is list:
+        return [demunch(e) for e in node]
+    else:
+        return node
+
+            
+def munch(name, indict, parent, depth=0):
+    if type(indict) is dict:
+        thisNode = Sinode(name=name, parent=parent, depth=depth+1, meta={"type":"default"})
+        for k, v in indict.items():
+            setattr(thisNode, k, munch(name=k, indict=v, parent=thisNode, depth=depth+1))
+    elif type(indict) is list:
+        return [munch(str(i), v, parent = parent, depth=depth+1) for i, v in enumerate(indict)]
+    else:
+        return indict
+    thisNode.depth= depth
+    return thisNode
 
 class Node(Generic, Upward):
     def getByField(self, name, val):
@@ -422,14 +452,21 @@ class Node(Generic, Upward):
             retlist += [self]
         return retlist
 
-
+    def munch(self, indict, depth=0):
+        if type(indict) is dict:
+            for k, v in indict.items():
+                print(k)
+                setattr(self, k, munch(name=k, parent=self, indict=v, depth=depth+1))
+        elif type(indict) is list:
+            for i, v in enumerate(indict):
+                setattr(self, k, munch(name=str(i), parent=self, indict=v, depth=depth+1))
+    
 def NodeFromFile(filename):
     # open a file, where you ant to store the data
     with open(filename, "rb") as f:
         # dump information to that file
         a = pickle.load(f)
     return a
-
 
 def fromDict(name, indict, parent=None, depth=0):
     print(" "*depth + name)
@@ -440,7 +477,6 @@ def fromDict(name, indict, parent=None, depth=0):
     elif type(indict) is list:
         thisNode = Sinode(name=name, parent=parent, depth=depth+1, meta={"type":"default"})
         print(indict)
-        die
         thisNode.children = [fromDict(name=str(i), indict=v, parent=thisNode, depth=depth+1) for i, v in enumerate(indict)]
     else:
         thisNode = Sinode(name=name, parent=parent, depth=depth+1, meta={"type":"default"}, data=indict)
