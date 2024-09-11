@@ -52,32 +52,6 @@ class Exportable:
             
         if self.depth == 0:
             htmlString += "<html>\n"
-            htmlString += """
-        <head>
-        <style>
-        a:link {
-          color: white;
-          background-color: transparent;
-          text-decoration: none;
-        }
-        a:visited {
-          color: white;
-          background-color: transparent;
-          text-decoration: none;
-        }
-        a:hover {
-          color: red;
-          background-color: transparent;
-          text-decoration: underline;
-        }
-        a:active {
-          color: yellow;
-          background-color: transparent;
-          text-decoration: underline;
-        }
-        </style>
-        </head>
-    """
             htmlString += (
                 f'<body style="color: {self.fromAbove("textColor")} ;align:{self.fromAbove("align")}">\n'
             )
@@ -112,7 +86,6 @@ class Exportable:
 
             textString += self.preformatListRecurse()
             htmlString += "</i>"
-
 
             # double newline after
             markdownString += "\n\n"
@@ -205,12 +178,13 @@ class Exportable:
                 markdownString += "#" * (self.depth) + " " + self.name + "\n\n"
                 if self.depth == 0:
                     htmlString += "<title>" + self.name + "</title>\n"
+                self.genURL()
                 htmlString += (
                     "<h"
                     + str(self.depth + 1)
                     + ">"
-                    + "<a name="
-                    + self.name.replace(" ", "_")
+                    + "<a href=" 
+                    + self.url
                     + ">"
                     + self.name
                     + "</a>"
@@ -222,7 +196,7 @@ class Exportable:
                 # htmlString     += "\n<hr>"
 
                 # add paragraph tag
-                htmlString += f'<p align="{self.getApex().align}">'
+                #htmlString += f'<p align="{self.getApex().align}">'
                 # markdownString += (
                 #    "<p align=\"justify\">"
                 # )
@@ -241,7 +215,8 @@ class Exportable:
 
             # if its height is 1, add paragraph end
             if self._maxheight != 0:
-                htmlString += "</p>"
+                pass
+                #htmlString += "</p>"
                 # markdownString += (
                 #    "</p>"
                 # )
@@ -414,6 +389,7 @@ class Exportable:
         htmlString = (
             "<br>"
             + '<figure><img src="'
+            + "/" 
             + self.imageName
             + f'" width="100%"><figcaption>{self.name}</figcaption></figure>\n'
         )

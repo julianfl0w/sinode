@@ -65,8 +65,16 @@ def depthFirstDictMerge(priority, additions):
 
     else:
         return priority
+    
+def is_json_serializable(obj):
+    try:
+        json.dumps(obj)
+        return True
+    except TypeError:
+        return False
 
-def toJsonDict(self):
+
+def toJsonDict(self, visited = []):
     if isinstance(self, Node):
         attributes_dict = {}  # Initialize an empty dictionary
         for attr in dir(self):
@@ -76,17 +84,25 @@ def toJsonDict(self):
                 continue
 
             attr_value = getattr(self, attr)  # Retrieve the value of the attribute
-            print(f"Attribute: {attr}, Type: {type(attr_value).__name__}")  # Print the attribute name and type
-            attributes_dict[attr] = toJsonDict(attr_value)  # Add the attribute and its value to the dictionary
+            #print(f"Attribute: {attr}, Type: {type(attr_value).__name__}")  # Print the attribute name and type
+            if attr_value in visited:
+                continue
+            visited += [attr_value]
+
+            if is_json_serializable(attr_value):
+                attributes_dict[attr] = toJsonDict(attr_value, visited=visited)  # Add the attribute and its value to the dictionary
+            else:
+                attributes_dict[attr] = str(attr_value)  # Add the attribute and its value to the dictionary
+
         return attributes_dict
     
     elif isinstance(self, list):
-        return [toJsonDict(e) for e in self]
+        return [toJsonDict(e, visited=visited) for e in self]
 
     elif isinstance(self, dict):
         attributes_dict = {}  # Initialize an empty dictionary
         for k, v in self.items():
-            attributes_dict[k] = toJsonDict(v)
+            attributes_dict[k] = toJsonDict(v, visited=visited)
         return attributes_dict
     
     elif str(type(self))== "<class 'numpy.ndarray'>":
@@ -283,10 +299,60 @@ class Node(Generic, Upward):
         else:
             retDict[str(type(self))] = childrenList
         return retDict
+    
+    def genURL(self):
+        self.urlDir = os.path.join("/", *[a.name.replace(" ","_").lower() for a in self.getAncestors()[:-1]])
+        self.urlPath = os.path.join(".", *[a.name.replace(" ","_").lower() for a in self.getAncestors()[:-1]])
+        self.url = os.path.join(self.urlDir, self.name.replace(" ","_").lower() + ".html")
+        self.path = os.path.join(self.urlPath, self.name.replace(" ","_").lower() + ".html")
+        if not hasattr(self, "parent") or self.parent is None:
+            self.url = "index.html"
+        return self.url
 
+    def exportStatic(self, index=0, value=1000.0, buildDir = "./build", template="SELECTED_NODE_TEXT"):
+        print(self.name)
+        retdict = dict(
+            url=self.genURL(),
+            name=self.name,
+            children=[],
+            indexedName=f"{index}\n\n{self.name}",
+            meta=self.meta
+        )
+
+        if self._maxheight <= 1:
+            retdict["value"] = value
+            if self.parent is not None:
+                retdict["parent"] = self.parent.name
+        else:
+            sfSum = sum(["skipFlare" not in c.meta.keys() for c in self.children])
+
+            value = value / sfSum
+            index = 0
+            for c in self.children:
+                if "skipFlare" not in c.meta.keys():
+                    retdict["children"] += [c.exportStatic(index=index, value=value, template=template)]
+                    index += 1
+
+        thisHTML = template.replace("SELECTED_NODE_TEXT", self.toMarkdown()["html"])
+        thisHTML = thisHTML.replace("BACK_ARROW_LINK", self.getElderSibling().genURL())
+        thisHTML = thisHTML.replace("FORWARD_ARROW_LINK", self.getYoungerSibling().genURL())
+
+        if hasattr(self, "parent") and self.parent is not None:
+            thisHTML = thisHTML.replace("UP_ARROW_LINK", self.parent.genURL())
+        else:
+            thisHTML = thisHTML.replace("UP_ARROW_LINK", self.url)
+
+        baseDir = os.path.join(buildDir, *[a.name.replace(" ","_").lower() for a in self.getAncestors()[:-1]])
+        os.makedirs(baseDir, exist_ok=True)
+        with open(os.path.join(buildDir, self.path), 'w+') as f:
+            f.write(thisHTML)
+
+        return retdict
+    
     def asFlare(self, index=0, value=1000.0):
         print(self.name)
         retdict = dict(
+            url=self.genURL(),
             name=self.name,
             children=[],
             text=self.toMarkdown()["html"],
@@ -326,6 +392,18 @@ class Node(Generic, Upward):
 
     def getSiblings(self):
         return self.parent.children
+    
+    def getElderSibling(self):
+        if not self.parent:
+            return self  # No parent means no siblings
+        index = self.parent.children.index(self)
+        return self.parent.children[index - 1]
+
+    def getYoungerSibling(self):
+        if not self.parent:
+            return self  # No parent means no siblings
+        index = self.parent.children.index(self)
+        return self.parent.children[(index + 1) % len(self.parent.children)]
 
     def descendants(self):
         d = self.children
